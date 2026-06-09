@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::db::Database;
 use crate::error::{Error, Result};
 use crate::exec::Command;
@@ -6,6 +8,11 @@ use crate::os::{detect, PlatformRegistry};
 
 pub trait PackageSource {
     fn resolve_package(&self, package: &str, os_type: &os_info::Type) -> Result<Option<String>>;
+
+    fn search_packages(&self, query: &str, os_type: &os_info::Type) -> Result<Option<Vec<String>>> {
+        let _ = (query, os_type);
+        Ok(None)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -84,68 +91,6 @@ impl Resolver {
         Ok((cmd, os_package, source, config.manager.clone()))
     }
 
-    pub fn resolve_all(
-        &self,
-        package: &str,
-        os_type: &os_info::Type,
-    ) -> Result<(Command, Vec<ResolveCandidate>)> {
-        let config = self
-            .registry
-            .for_type(os_type)
-            .ok_or_else(|| Error::UnsupportedOs(format!("{os_type:?}")))?;
-
-        let mut candidates = Vec::new();
-        let mut seen = std::collections::HashSet::new();
-
-        for source in &self.sources {
-            if let Some(name) = source.resolve_package(package, os_type)? {
-                if seen.insert(name.clone()) {
-                    candidates.push(ResolveCandidate {
-                        name,
-                        source: "repology".into(),
-                    });
-                }
-            }
-        }
-
-        if let Some(mapping) = self.db.lookup(package, os_type)? {
-            if seen.insert(mapping.os_package.clone()) {
-                candidates.push(ResolveCandidate {
-                    name: mapping.os_package,
-                    source: format!("database (confidence={})", mapping.confidence),
-                });
-            }
-        }
-
-        if let Some(fb_config) = self.registry.for_type(os_type) {
-            if let Some(searcher) = FallbackSearcher::from_config(fb_config) {
-                if let Some(name) = searcher.search(package)? {
-                    if seen.insert(name.clone()) {
-                        candidates.push(ResolveCandidate {
-                            name,
-                            source: "fallback search".into(),
-                        });
-                    }
-                }
-            }
-        }
-
-        if seen.insert(package.to_string()) {
-            candidates.push(ResolveCandidate {
-                name: package.to_string(),
-                source: "identity".into(),
-            });
-        }
-
-        let primary = candidates
-            .first()
-            .map(|c| c.name.as_str())
-            .unwrap_or(package);
-        let cmd = Command::from_config(config, primary);
-
-        Ok((cmd, candidates))
-    }
-
     pub fn resolve_with_provenance(
         &self,
         package: &str,
@@ -171,6 +116,59 @@ impl Resolver {
             .unwrap_or_else(|| package.to_string());
 
         Ok((Command::from_config(config, &os_package), mapping))
+    }
+
+    pub fn search_candidates(
+        &self,
+        query: &str,
+        os_type: &os_info::Type,
+    ) -> Result<Vec<ResolveCandidate>> {
+        let mut candidates = Vec::new();
+        let mut seen = HashSet::new();
+
+        for source in &self.sources {
+            if let Some(names) = source.search_packages(query, os_type)? {
+                for name in names {
+                    if seen.insert(name.clone()) {
+                        candidates.push(ResolveCandidate {
+                            name,
+                            source: "repology".into(),
+                        });
+                    }
+                }
+            }
+        }
+
+        for mapping in self.db.search(query, os_type)? {
+            if seen.insert(mapping.os_package.clone()) {
+                candidates.push(ResolveCandidate {
+                    name: mapping.os_package,
+                    source: format!("database (confidence={})", mapping.confidence),
+                });
+            }
+        }
+
+        if let Some(config) = self.registry.for_type(os_type) {
+            if let Some(searcher) = FallbackSearcher::from_config(config) {
+                if let Some(name) = searcher.search(query)? {
+                    if seen.insert(name.clone()) {
+                        candidates.push(ResolveCandidate {
+                            name,
+                            source: "fallback search".into(),
+                        });
+                    }
+                }
+            }
+        }
+
+        if seen.insert(query.to_string()) {
+            candidates.push(ResolveCandidate {
+                name: query.to_string(),
+                source: "identity".into(),
+            });
+        }
+
+        Ok(candidates)
     }
 
     fn lookup_package_name(

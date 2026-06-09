@@ -108,22 +108,31 @@ fn run(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
 fn run_search(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
     let registry = PlatformRegistry::load()?;
     let os_type = resolve_os(&registry, &cli.os);
-    let manager = registry
-        .for_type(&os_type)
-        .map(|c| c.manager.clone())
-        .unwrap_or_else(|| "?".into());
     let sources = build_sources(&registry, cli.offline)?;
+
+    let (manager, config_clone) = {
+        let c = registry.for_type(&os_type);
+        (c.map(|c| c.manager.clone()), c.cloned())
+    };
+
     let resolver = Resolver::with_registry_and_sources(registry, sources)?;
-    let (cmd, candidates) = resolver.resolve_all(package, &os_type)?;
+    let candidates = resolver.search_candidates(package, &os_type)?;
 
     println!(" OS:       {os_type:?}");
-    println!(" Manager:  {manager}");
-    println!(" Request:  {package}");
+    println!(" Manager:  {}", manager.as_deref().unwrap_or("?"));
+    println!(" Query:    {package}");
     println!(" Results:");
     for c in &candidates {
         println!("   {:30}  <- {}", c.name, c.source);
     }
-    println!(" Command:  {}", cmd.to_display());
+    if let Some(ref cfg) = config_clone {
+        let primary = candidates
+            .first()
+            .map(|c| c.name.as_str())
+            .unwrap_or(package);
+        let cmd = upi_core::Command::from_config(cfg, primary);
+        println!(" Command:  {}", cmd.to_display());
+    }
 
     Ok(())
 }

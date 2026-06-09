@@ -1232,6 +1232,7 @@ dependencies = [
 name = "upi-tests"
 version = "0.1.0"
 dependencies = [
+ "serde_json",
  "upi-core",
  "upi-net",
 ]

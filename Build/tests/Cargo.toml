@@ -8,3 +8,4 @@ publish = false
 [dependencies]
 upi-core = { path = "../crates/upi-core" }
 upi-net = { path = "../crates/upi-net" }
+serde_json = "1"

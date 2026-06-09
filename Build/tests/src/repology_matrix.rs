@@ -1,5 +1,5 @@
 use upi_core::{OsType, PlatformRegistry};
-use upi_net::{find_package_for_os, RepologyPackage};
+use upi_net::{find_package_for_os, RepologyPackage, RepologySearchResponse};
 
 fn registry() -> PlatformRegistry {
     PlatformRegistry::load().unwrap()
@@ -88,4 +88,57 @@ fn returns_none_on_empty_data() {
     let data = vec![];
     let result = find_package_for_os(&data, &OsType::Debian, &registry());
     assert_eq!(result, None);
+}
+
+#[test]
+fn search_response_deserializes_from_json() {
+    let json = r#"{
+        "python": [
+            {"repo": "homebrew", "binname": "python@3.14", "version": "3.14.0"},
+            {"repo": "debian_13", "binname": "python3", "version": "3.13.0"}
+        ],
+        "python2": [
+            {"repo": "homebrew", "binname": "python@2.7", "version": "2.7.18"}
+        ]
+    }"#;
+
+    let data: RepologySearchResponse = serde_json::from_str(json).unwrap();
+    assert_eq!(data.len(), 2);
+    assert!(data.contains_key("python"));
+    assert!(data.contains_key("python2"));
+
+    let python_packages = &data["python"];
+    assert_eq!(python_packages.len(), 2);
+
+    let homebrew = &python_packages[0];
+    assert_eq!(homebrew.repo, "homebrew");
+    assert_eq!(homebrew.binname.as_deref(), Some("python@3.14"));
+
+    let debian = &python_packages[1];
+    assert_eq!(debian.repo, "debian_13");
+    assert_eq!(debian.binname.as_deref(), Some("python3"));
+}
+
+#[test]
+fn search_response_filters_by_os() {
+    let json = r#"{
+        "python": [
+            {"repo": "homebrew", "binname": "python@3.14", "version": "3.14.0"},
+            {"repo": "arch", "binname": "python", "version": "3.13.0"}
+        ],
+        "python2": [
+            {"repo": "homebrew", "binname": "python@2.7", "version": "2.7.18"}
+        ]
+    }"#;
+
+    let data: RepologySearchResponse = serde_json::from_str(json).unwrap();
+
+    let mut results = Vec::new();
+    for (_project, packages) in &data {
+        if let Some(os_name) = find_package_for_os(packages, &OsType::Macos, &registry()) {
+            results.push(os_name);
+        }
+    }
+    results.sort();
+    assert_eq!(results, vec!["python@2.7", "python@3.14"]);
 }

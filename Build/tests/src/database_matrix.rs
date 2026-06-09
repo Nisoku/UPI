@@ -206,6 +206,101 @@ fn opens_reuses_cache() {
 }
 
 #[test]
+fn search_partial_match_finds_package() {
+    let dir = tmp_cache_dir();
+    let db = Database::open_at(&dir).unwrap();
+
+    let results = db.search("pyt", &OsType::Macos).unwrap();
+    assert!(
+        !results.is_empty(),
+        "expected at least one result for 'pyt'"
+    );
+    let names: Vec<&str> = results.iter().map(|m| m.os_package.as_str()).collect();
+    assert!(
+        names.contains(&"python"),
+        "expected 'python' in search results for 'pyt'"
+    );
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn search_exact_match() {
+    let dir = tmp_cache_dir();
+    let db = Database::open_at(&dir).unwrap();
+
+    let results = db.search("python", &OsType::Macos).unwrap();
+    assert!(!results.is_empty());
+    assert!(results.iter().any(|m| m.os_package == "python"));
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn search_no_match_returns_empty() {
+    let dir = tmp_cache_dir();
+    let db = Database::open_at(&dir).unwrap();
+
+    let results = db.search("xyznonexistent12345", &OsType::Macos).unwrap();
+    assert!(results.is_empty());
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn search_case_insensitive() {
+    let dir = tmp_cache_dir();
+    let db = Database::open_at(&dir).unwrap();
+
+    let results = db.search("PYTHON", &OsType::Macos).unwrap();
+    assert!(
+        !results.is_empty(),
+        "expected results for 'PYTHON' (uppercase)"
+    );
+    assert!(results.iter().any(|m| m.os_package == "python"));
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn search_multiple_results() {
+    let dir = tmp_cache_dir();
+    let db = Database::open_at(&dir).unwrap();
+
+    let results = db.search("lib", &OsType::Debian).unwrap();
+    assert!(
+        results.len() >= 2,
+        "expected at least 2 results for 'lib', got {}",
+        results.len()
+    );
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn search_os_specific() {
+    let dir = tmp_cache_dir();
+    let db = Database::open_at(&dir).unwrap();
+
+    let macos = db.search("python", &OsType::Macos).unwrap();
+    let debian = db.search("python", &OsType::Debian).unwrap();
+
+    let macos_names: Vec<&str> = macos.iter().map(|m| m.os_package.as_str()).collect();
+    let debian_names: Vec<&str> = debian.iter().map(|m| m.os_package.as_str()).collect();
+
+    assert!(
+        macos_names.contains(&"python"),
+        "macos should have 'python'"
+    );
+    assert!(
+        debian_names.contains(&"python3"),
+        "debian should have 'python3'"
+    );
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
 fn distro_variants_have_entries() {
     let dir = tmp_cache_dir();
     let db = Database::open_at(&dir).unwrap();

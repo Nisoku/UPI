@@ -98,6 +98,42 @@ impl Database {
         }
     }
 
+    pub fn search(&self, query: &str, os_type: &os_info::Type) -> Result<Vec<Mapping>> {
+        let os_str = format!("{:?}", os_type);
+        let pattern = format!("%{}%", query.to_lowercase());
+        log::debug!("db search: '{query}' on {os_str}");
+
+        let mut stmt = self
+            .conn
+            .prepare(
+                "SELECT m.os_package, m.source, m.confidence, m.notes
+                 FROM mappings m
+                 JOIN packages p ON p.id = m.package_id
+                 WHERE LOWER(p.name) LIKE ?1 AND m.os = ?2
+                 ORDER BY m.confidence DESC
+                 LIMIT 20",
+            )
+            .map_err(|e| Error::Database(e.to_string()))?;
+
+        let rows = stmt
+            .query_map(rusqlite::params![pattern, os_str], |row| {
+                Ok(Mapping {
+                    os_package: row.get(0)?,
+                    source: row.get(1)?,
+                    confidence: row.get(2)?,
+                    notes: row.get(3)?,
+                })
+            })
+            .map_err(|e| Error::Database(e.to_string()))?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row.map_err(|e| Error::Database(e.to_string()))?);
+        }
+        log::debug!("db search: {} results", results.len());
+        Ok(results)
+    }
+
     fn resolve_alias(&self, name: &str) -> Result<String> {
         let mut stmt = self
             .conn

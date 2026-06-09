@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::Deserialize;
 use upi_core::{OsType, PackageSource, PlatformRegistry};
 
@@ -21,6 +23,7 @@ pub struct RepologyPackage {
 }
 
 pub type RepologyResponse = Vec<RepologyPackage>;
+pub type RepologySearchResponse = HashMap<String, RepologyResponse>;
 
 pub struct RepologyClient {
     base_url: String,
@@ -74,6 +77,47 @@ impl RepologyClient {
         log::debug!("repology: result for '{project}' on {os_type:?} = {result:?}");
         Ok(result)
     }
+
+    pub fn search(&self, query: &str, os_type: &OsType) -> Result<Vec<String>> {
+        let encoded: String = url::form_urlencoded::byte_serialize(query.as_bytes()).collect();
+        let url = format!("{}/projects/?search={}", self.base_url, encoded);
+
+        log::debug!("repology search: GET {url}");
+
+        let mut response = match self
+            .client
+            .get(&url)
+            .header("User-Agent", USER_AGENT)
+            .call()
+        {
+            Ok(resp) => resp,
+            Err(e) => return Err(Error::Http(e.to_string())),
+        };
+
+        let body = response
+            .body_mut()
+            .read_to_string()
+            .map_err(|e| Error::Http(format!("body read: {e}")))?;
+
+        let data: RepologySearchResponse =
+            serde_json::from_str(&body).map_err(|e| Error::Parse(format!("{e}")))?;
+
+        log::debug!("repology search: {} projects for '{query}'", data.len());
+
+        let mut results = Vec::new();
+        for (project, packages) in &data {
+            if let Some(os_name) = find_package_for_os(packages, os_type, &self.registry) {
+                log::debug!("repology search: '{query}' -> project={project}, os_name={os_name}");
+                results.push(os_name);
+            }
+        }
+        results.sort();
+        log::debug!(
+            "repology search: {} results for '{query}' on {os_type:?}",
+            results.len()
+        );
+        Ok(results)
+    }
 }
 
 impl PackageSource for RepologyClient {
@@ -83,6 +127,16 @@ impl PackageSource for RepologyClient {
         os_type: &OsType,
     ) -> std::result::Result<Option<String>, upi_core::Error> {
         self.resolve(package, os_type)
+            .map_err(|e| upi_core::Error::Network(e.to_string()))
+    }
+
+    fn search_packages(
+        &self,
+        query: &str,
+        os_type: &OsType,
+    ) -> std::result::Result<Option<Vec<String>>, upi_core::Error> {
+        self.search(query, os_type)
+            .map(Some)
             .map_err(|e| upi_core::Error::Network(e.to_string()))
     }
 }

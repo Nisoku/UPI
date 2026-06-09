@@ -107,6 +107,55 @@ fn resolver_detects_and_resolves() {
 }
 
 #[test]
+fn search_candidates_returns_results() {
+    let resolver = Resolver::new().unwrap();
+    let os_type = detect();
+
+    let candidates = resolver.search_candidates("python", &os_type).unwrap();
+    assert!(
+        !candidates.is_empty(),
+        "expected at least one candidate for 'python'"
+    );
+    let names: Vec<&str> = candidates.iter().map(|c| c.name.as_str()).collect();
+    assert!(
+        names.contains(&"python"),
+        "expected 'python' in candidates, got: {names:?}"
+    );
+}
+
+#[test]
+fn search_candidates_partial_match() {
+    let resolver = Resolver::new().unwrap();
+    let os_type = detect();
+
+    let candidates = resolver.search_candidates("pyt", &os_type).unwrap();
+    assert!(
+        !candidates.is_empty(),
+        "expected at least one candidate for 'pyt'"
+    );
+    let sources: Vec<&str> = candidates.iter().map(|c| c.source.as_str()).collect();
+    assert!(
+        sources.iter().any(|s| s.starts_with("database")),
+        "expected a DB result in candidates, got sources: {sources:?}"
+    );
+}
+
+#[test]
+fn search_candidates_always_includes_identity() {
+    let resolver = Resolver::new().unwrap();
+    let os_type = detect();
+
+    let candidates = resolver
+        .search_candidates("zzz_nonexistent_zzz", &os_type)
+        .unwrap();
+    let names: Vec<&str> = candidates.iter().map(|c| c.name.as_str()).collect();
+    assert!(
+        names.contains(&"zzz_nonexistent_zzz"),
+        "expected identity fallback in candidates, got: {names:?}"
+    );
+}
+
+#[test]
 fn detect_returns_expected_type() {
     let os_type = detect();
     assert!(
