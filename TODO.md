@@ -1,31 +1,19 @@
 # TODO
 
-## YAML OS Definitions
-
-- [x] Define YAML schema (noyalib)
-- [x] Add macOS YAML (Homebrew)
-- [x] Add Debian/Ubuntu YAML (apt)
-- [x] Add Fedora YAML (dnf)
-- [x] Add Arch YAML (pacman)
-- [x] Add Windows YAML (winget)
-- [x] Add YAML loader
-
 ## Resolver Pipeline
 
-- [x] Implement platform detection (os_info)
-- [x] Load YAML registry (include_dir + noyalib)
-- [ ] Resolve package name (identity mapping stub)
-- [ ] Build install command from YAML template
-- [ ] Execute or dry-run
-- [ ] Add tests for resolver
+- [x] Resolve package name (identity mapping stub)
+- [x] Build install command from YAML template
+- [x] Execute or dry-run
+- [x] Add tests for resolver
 
 ## Database Integration
 
-- [ ] Add SQLite schema (rusqlite)
-- [ ] Add seed DB loader (include_bytes! + ruzstd)
-- [ ] Add DB lookup in resolver
+- [X] Add SQLite schema (rusqlite)
+- [X] Add seed DB loader (include_bytes! + ruzstd)
+- [X] Add DB lookup in resolver
 - [ ] Add DB update mechanism (GitHub Releases)
-- [ ] Add tests for database
+- [X] Add tests for database
 
 ## Repology Integration (upi-net)
 

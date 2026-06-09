@@ -1,0 +1,10 @@
+[package]
+name = "db-build"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+rusqlite = { version = "0.40.1", features = ["bundled"] }
+ruzstd = "0.8.3"

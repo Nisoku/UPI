@@ -5,6 +5,7 @@ members = [
   "Build/crates/upi-cli",
   "Build/crates/upi-net",
   "Build/tests",
+  "Build/tools/db-build",
 ]
 
 [workspace.package]

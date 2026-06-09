@@ -4,6 +4,7 @@ pub mod exec;
 pub mod os;
 pub mod resolver;
 
+pub use db::{Database, Mapping};
 pub use error::{Error, Result};
 pub use exec::Command;
 pub use os::{detect, PlatformConfig, PlatformRegistry};
