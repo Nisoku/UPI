@@ -6,22 +6,22 @@
 
 ## Database Integration
 
-- [ ] Add DB update mechanism (GitHub Actions (look at how chromebrew does it))
+- [X] Add DB update mechanism (GitHub Actions (look at how chromebrew does it))
 
 ## Docs + CI
 
 - [ ] Add Docs/ with architecture and YAML schema (docmd, duh)
-- [ ] Add GitHub CI
+- [X] Add GitHub CI
 - [ ] Add contribution guide + miscellaneous other things we need
 
 ## Install Script
 
 - [ ] Write install.sh for cross platform installing without needing `cargo`
-- [ ] Add GitHub Releases CI job for binary uploads
+- [x] Add GitHub Releases CI job for binary uploads
 
 ## Seed DB
 
-- [ ] Add DB update mechanism (GitHub Actions, every 2-3 weeks)
+- [x] Add DB update mechanism (GitHub Actions, every 2 weeks)
 - [X] Expand from 20 to 50+ common packages
 
 ## Rust Tooling

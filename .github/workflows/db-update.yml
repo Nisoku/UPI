@@ -1,0 +1,33 @@
+name: DB Update
+
+on:
+  schedule:
+    - cron: '0 6 */14 * *'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@just
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Generate seed database
+        run: cargo run -p db-update
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "UPI Bot"
+          git config user.email "bot@upi.pkg"
+          if ! git diff --quiet -- Build/data/; then
+            git add Build/data/seed.db.zst Build/data/seed-version.txt
+            git commit -m "Update seed database"
+            git push
+          fi

@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build only, skip GitHub release upload'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            suffix: ""
+            label: linux-amd64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            suffix: ""
+            label: macos-amd64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            suffix: ""
+            label: macos-arm64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: ".exe"
+            label: windows-amd64
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build release
+        run: cargo build --release --target ${{ matrix.target }} -p upi-cli
+
+      - name: Stage binary
+        run: |
+          mkdir -p /tmp/upi-release
+          cp "target/${{ matrix.target }}/release/upi${{ matrix.suffix }}" \
+             "/tmp/upi-release/upi-${{ matrix.label }}${{ matrix.suffix }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: upi-${{ matrix.label }}
+          path: /tmp/upi-release/*
+
+  release:
+    needs: build
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run != 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: /tmp/artifacts
+
+      - name: Create release archive
+        run: |
+          cd /tmp/artifacts
+          for dir in */; do
+            label="${dir%/}"
+            cp "$dir"/* /tmp/upi-release/
+          done
+          cd /tmp
+          tar -czf upi-${{ github.ref_name }}.tar.gz \
+            -C upi-release .
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: /tmp/upi-${{ github.ref_name }}.tar.gz
+          generate_release_notes: true
