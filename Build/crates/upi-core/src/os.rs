@@ -65,6 +65,19 @@ impl PlatformRegistry {
         None
     }
 
+    pub fn parse_os(&self, name: &str) -> Option<&os_info::Type> {
+        let normalized = name.to_lowercase().replace(['-', '_'], "");
+        for config in &self.configs {
+            for target in &config.targets {
+                let t = format!("{:?}", target).to_lowercase();
+                if t == normalized || t.starts_with(&normalized) || normalized.starts_with(&t) {
+                    return Some(target);
+                }
+            }
+        }
+        None
+    }
+
     pub fn targets(&self) -> Vec<&os_info::Type> {
         let mut seen = Vec::new();
         for config in &self.configs {

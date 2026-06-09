@@ -8,6 +8,12 @@ pub trait PackageSource {
     fn resolve_package(&self, package: &str, os_type: &os_info::Type) -> Result<Option<String>>;
 }
 
+#[derive(Debug, Clone)]
+pub struct ResolveCandidate {
+    pub name: String,
+    pub source: String,
+}
+
 pub struct Resolver {
     registry: PlatformRegistry,
     db: Database,
@@ -45,15 +51,99 @@ impl Resolver {
 
     pub fn resolve(&self, package: &str) -> Result<Command> {
         let os_type = detect();
+        log::debug!("detected OS: {os_type:?}");
+        self.resolve_for_os(package, &os_type)
+    }
 
+    pub fn resolve_for_os(&self, package: &str, os_type: &os_info::Type) -> Result<Command> {
         let config = self
             .registry
-            .for_type(&os_type)
+            .for_type(os_type)
             .ok_or_else(|| Error::UnsupportedOs(format!("{os_type:?}")))?;
 
-        let os_package = self.lookup_package_name(package, &os_type)?;
+        log::debug!("using config: {} (sudo={})", config.manager, config.sudo);
+        let (os_package, _source) = self.lookup_package_name(package, os_type)?;
+        log::info!("resolved '{}' -> '{}'", package, os_package);
 
         Ok(Command::from_config(config, &os_package))
+    }
+
+    pub fn resolve_detailed(
+        &self,
+        package: &str,
+        os_type: &os_info::Type,
+    ) -> Result<(Command, String, String, String)> {
+        let config = self
+            .registry
+            .for_type(os_type)
+            .ok_or_else(|| Error::UnsupportedOs(format!("{os_type:?}")))?;
+
+        let (os_package, source) = self.lookup_package_name(package, os_type)?;
+        let cmd = Command::from_config(config, &os_package);
+
+        Ok((cmd, os_package, source, config.manager.clone()))
+    }
+
+    pub fn resolve_all(
+        &self,
+        package: &str,
+        os_type: &os_info::Type,
+    ) -> Result<(Command, Vec<ResolveCandidate>)> {
+        let config = self
+            .registry
+            .for_type(os_type)
+            .ok_or_else(|| Error::UnsupportedOs(format!("{os_type:?}")))?;
+
+        let mut candidates = Vec::new();
+        let mut seen = std::collections::HashSet::new();
+
+        for source in &self.sources {
+            if let Some(name) = source.resolve_package(package, os_type)? {
+                if seen.insert(name.clone()) {
+                    candidates.push(ResolveCandidate {
+                        name,
+                        source: "repology".into(),
+                    });
+                }
+            }
+        }
+
+        if let Some(mapping) = self.db.lookup(package, os_type)? {
+            if seen.insert(mapping.os_package.clone()) {
+                candidates.push(ResolveCandidate {
+                    name: mapping.os_package,
+                    source: format!("database (confidence={})", mapping.confidence),
+                });
+            }
+        }
+
+        if let Some(fb_config) = self.registry.for_type(os_type) {
+            if let Some(searcher) = FallbackSearcher::from_config(fb_config) {
+                if let Some(name) = searcher.search(package)? {
+                    if seen.insert(name.clone()) {
+                        candidates.push(ResolveCandidate {
+                            name,
+                            source: "fallback search".into(),
+                        });
+                    }
+                }
+            }
+        }
+
+        if seen.insert(package.to_string()) {
+            candidates.push(ResolveCandidate {
+                name: package.to_string(),
+                source: "identity".into(),
+            });
+        }
+
+        let primary = candidates
+            .first()
+            .map(|c| c.name.as_str())
+            .unwrap_or(package);
+        let cmd = Command::from_config(config, primary);
+
+        Ok((cmd, candidates))
     }
 
     pub fn resolve_with_provenance(
@@ -61,13 +151,20 @@ impl Resolver {
         package: &str,
     ) -> Result<(Command, Option<crate::db::Mapping>)> {
         let os_type = detect();
+        self.resolve_with_provenance_for_os(package, &os_type)
+    }
 
+    pub fn resolve_with_provenance_for_os(
+        &self,
+        package: &str,
+        os_type: &os_info::Type,
+    ) -> Result<(Command, Option<crate::db::Mapping>)> {
         let config = self
             .registry
-            .for_type(&os_type)
+            .for_type(os_type)
             .ok_or_else(|| Error::UnsupportedOs(format!("{os_type:?}")))?;
 
-        let mapping = self.db.lookup(package, &os_type)?;
+        let mapping = self.db.lookup(package, os_type)?;
         let os_package = mapping
             .as_ref()
             .map(|m| m.os_package.clone())
@@ -76,25 +173,41 @@ impl Resolver {
         Ok((Command::from_config(config, &os_package), mapping))
     }
 
-    fn lookup_package_name(&self, package: &str, os_type: &os_info::Type) -> Result<String> {
-        for source in &self.sources {
+    fn lookup_package_name(
+        &self,
+        package: &str,
+        os_type: &os_info::Type,
+    ) -> Result<(String, String)> {
+        for (i, source) in self.sources.iter().enumerate() {
+            log::debug!("source[{i}]: trying to resolve '{package}'");
             if let Some(name) = source.resolve_package(package, os_type)? {
-                return Ok(name);
+                log::debug!("source[{i}]: found '{name}'");
+                return Ok((name, "repology".into()));
             }
         }
 
+        log::debug!("db: looking up '{package}' on {os_type:?}");
         if let Some(mapping) = self.db.lookup(package, os_type)? {
-            return Ok(mapping.os_package);
+            log::debug!(
+                "db: hit '{}' (confidence={})",
+                mapping.os_package,
+                mapping.confidence
+            );
+            let source = format!("database (confidence={})", mapping.confidence);
+            return Ok((mapping.os_package, source));
         }
 
+        log::debug!("fallback: searching for '{package}'");
         if let Some(config) = self.registry.for_type(os_type) {
             if let Some(searcher) = FallbackSearcher::from_config(config) {
                 if let Some(name) = searcher.search(package)? {
-                    return Ok(name);
+                    log::debug!("fallback: found '{name}'");
+                    return Ok((name, "fallback search".into()));
                 }
             }
         }
 
-        Ok(package.to_string())
+        log::debug!("identity: using '{package}' as-is");
+        Ok((package.to_string(), "identity".into()))
     }
 }

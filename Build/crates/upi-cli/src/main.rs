@@ -1,5 +1,6 @@
-use clap::{Parser, Subcommand};
-use upi_core::{PackageSource, PlatformRegistry, Resolver};
+use clap::{ArgAction, Parser, Subcommand};
+use log::LevelFilter;
+use upi_core::{detect, OsType, PackageSource, PlatformRegistry, Resolver};
 use upi_net::RepologyClient;
 
 #[derive(Parser)]
@@ -8,50 +9,121 @@ struct Cli {
     #[command(subcommand)]
     command: Commands,
 
-    #[arg(long, global = true)]
+    #[arg(long, global = true, help = "Show command without executing")]
     dry_run: bool,
 
     #[arg(long, global = true, help = "Skip network lookups")]
     offline: bool,
+
+    #[arg(
+        long,
+        global = true,
+        help = "Override target OS (e.g., macos, debian, arch)"
+    )]
+    os: Option<String>,
+
+    #[arg(
+        short,
+        long,
+        global = true,
+        action = ArgAction::Count,
+        help = "Increase verbosity (-v, -vv, -vvv)"
+    )]
+    verbose: u8,
 }
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Install a package
     Install { package: String },
+    /// Resolve a package name to an install command
+    Search { package: String },
 }
 
 fn main() {
     let cli = Cli::parse();
+    init_logger(cli.verbose);
 
     let result = match &cli.command {
-        Commands::Install { package } => run_install(package, cli.dry_run, cli.offline),
+        Commands::Install { package } => run(package, &cli),
+        Commands::Search { package } => run_search(package, &cli),
     };
 
     if let Err(e) = result {
-        eprintln!("error: {e}");
+        let msg = format!("error: {e}");
+        eprintln!("{msg}");
         std::process::exit(1);
     }
 }
 
-fn run_install(package: &str, dry_run: bool, offline: bool) -> Result<(), upi_core::Error> {
-    let registry = PlatformRegistry::load()?;
+fn init_logger(verbosity: u8) {
+    let level = match verbosity {
+        0 => LevelFilter::Warn,
+        1 => LevelFilter::Info,
+        2 => LevelFilter::Debug,
+        _ => LevelFilter::Trace,
+    };
+    env_logger::Builder::new()
+        .filter_level(level)
+        .parse_env("RUST_LOG")
+        .init();
+}
 
-    let sources: Vec<Box<dyn PackageSource>> = if offline {
-        Vec::new()
+fn resolve_os(registry: &PlatformRegistry, os_override: &Option<String>) -> OsType {
+    os_override
+        .as_deref()
+        .and_then(|name| registry.parse_os(name).cloned())
+        .unwrap_or_else(detect)
+}
+
+fn build_sources(
+    registry: &PlatformRegistry,
+    offline: bool,
+) -> Result<Vec<Box<dyn PackageSource>>, upi_core::Error> {
+    if offline {
+        Ok(Vec::new())
     } else {
         let client = RepologyClient::new(registry.clone())
             .map_err(|e| upi_core::Error::Network(format!("repology: {e}")))?;
-        vec![Box::new(client)]
-    };
+        Ok(vec![Box::new(client)])
+    }
+}
 
+fn run(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
+    let registry = PlatformRegistry::load()?;
+    let os_type = resolve_os(&registry, &cli.os);
+    let sources = build_sources(&registry, cli.offline)?;
     let resolver = Resolver::with_registry_and_sources(registry, sources)?;
-    let cmd = resolver.resolve(package)?;
+    let cmd = resolver.resolve_for_os(package, &os_type)?;
 
-    if dry_run {
+    if cli.dry_run {
         println!("{}", cmd.to_display());
     } else {
         cmd.run()?;
     }
+
+    Ok(())
+}
+
+fn run_search(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
+    let registry = PlatformRegistry::load()?;
+    let os_type = resolve_os(&registry, &cli.os);
+    let manager = registry
+        .for_type(&os_type)
+        .map(|c| c.manager.clone())
+        .unwrap_or_else(|| "?".into());
+    let sources = build_sources(&registry, cli.offline)?;
+    let resolver = Resolver::with_registry_and_sources(registry, sources)?;
+    let (cmd, candidates) = resolver.resolve_all(package, &os_type)?;
+
+    println!(" OS:       {os_type:?}");
+    println!(" Manager:  {manager}");
+    println!(" Request:  {package}");
+    println!(" Results:");
+    for c in &candidates {
+        println!("   {:30}  <- {}", c.name, c.source);
+    }
+    println!(" Command:  {}", cmd.to_display());
 
     Ok(())
 }

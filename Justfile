@@ -25,4 +25,4 @@ release:
 format: 
     cargo fmt
 
-all: check test
+all: check format clippy test

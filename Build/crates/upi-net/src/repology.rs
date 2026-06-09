@@ -45,6 +45,8 @@ impl RepologyClient {
         let encoded: String = url::form_urlencoded::byte_serialize(project.as_bytes()).collect();
         let url = format!("{}/project/{}", self.base_url, encoded);
 
+        log::debug!("repology: GET {url}");
+
         let mut response = match self
             .client
             .get(&url)
@@ -52,7 +54,10 @@ impl RepologyClient {
             .call()
         {
             Ok(resp) => resp,
-            Err(ureq::Error::StatusCode(404)) => return Ok(None),
+            Err(ureq::Error::StatusCode(404)) => {
+                log::debug!("repology: 404 for '{project}'");
+                return Ok(None);
+            }
             Err(e) => return Err(Error::Http(e.to_string())),
         };
 
@@ -64,7 +69,10 @@ impl RepologyClient {
         let data: RepologyResponse =
             serde_json::from_str(&body).map_err(|e| Error::Parse(format!("{e}")))?;
 
-        Ok(find_package_for_os(&data, os_type, &self.registry))
+        log::debug!("repology: {} entries for '{project}'", data.len());
+        let result = find_package_for_os(&data, os_type, &self.registry);
+        log::debug!("repology: result for '{project}' on {os_type:?} = {result:?}");
+        Ok(result)
     }
 }
 

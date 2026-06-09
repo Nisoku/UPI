@@ -4,21 +4,14 @@
 
 - [ ] Add DB update mechanism (GitHub Actions (look at how chromebrew does it))
 
-## Fallback Search using system package manager
-
-- [X] Add fallback search commands from YAML (`provides`, `search` fields)
-- [X] Integrate into resolver pipeline (after Repology, after DB)
-- [X] Add heuristics for best match (`provides_parse` patterns)
-- [X] Add tests for fallback
-
 ## Logging + UX Polish
 
-- [ ] Add verbosity flags (clap)
-- [ ] Add pretty output
-- [ ] Add error formatting
-- [ ] Add timing and debug logs (`log` + `env_logger`)
-- [ ] `--os` override flag (test install commands for any platform)
-- [ ] `search` subcommand (`upi search <query>`)
+- [X] Add verbosity flags (clap)
+- [X] Add pretty output
+- [X] Add error formatting
+- [X] Add timing and debug logs (`log` + `env_logger`)
+- [X] `--os` override flag (test install commands for any platform)
+- [X] `search` subcommand (`upi search <query>`)
 
 ## Docs + CI
 

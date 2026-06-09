@@ -16,6 +16,7 @@ impl FallbackSearcher {
 
     pub fn search(&self, query: &str) -> Result<Option<String>> {
         let cmd_str = self.search_template.replace("{query}", query);
+        log::debug!("fallback: running {cmd_str}");
 
         let output = std::process::Command::new("sh")
             .arg("-c")
@@ -23,11 +24,14 @@ impl FallbackSearcher {
             .output()?;
 
         if !output.status.success() {
+            log::debug!("fallback: non-zero exit ({:?})", output.status.code());
             return Ok(None);
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
-        Ok(parse_search_output(&stdout, query))
+        let result = parse_search_output(&stdout, query);
+        log::debug!("fallback: result={result:?}");
+        Ok(result)
     }
 }
 

@@ -34,12 +34,16 @@ impl Database {
         let meta_path = cache_dir.join(META_FILE);
 
         if should_rehydrate(&meta_path, &db_path)? {
+            log::info!("rehydrating seed database");
             let decompressed = decompress_seed()?;
             std::fs::write(&db_path, &decompressed).map_err(Error::Io)?;
             write_meta(&meta_path)?;
+        } else {
+            log::debug!("seed database is current");
         }
 
         let conn = Connection::open(&db_path).map_err(|e| Error::Database(e.to_string()))?;
+        log::debug!("database opened at {}", db_path.display());
 
         Ok(Self { conn })
     }
@@ -47,6 +51,12 @@ impl Database {
     pub fn lookup(&self, package: &str, os_type: &os_info::Type) -> Result<Option<Mapping>> {
         let canonical = self.resolve_alias(package)?;
         let os_str = format!("{:?}", os_type);
+        log::debug!(
+            "db lookup: '{}' -> canonical='{}' for {}",
+            package,
+            canonical,
+            os_str
+        );
 
         let mut stmt = self
             .conn
@@ -69,6 +79,18 @@ impl Database {
             })
         });
 
+        match &result {
+            Ok(mapping) => log::debug!(
+                "db hit: {} (confidence={}, source={})",
+                mapping.os_package,
+                mapping.confidence,
+                mapping.source
+            ),
+            Err(rusqlite::Error::QueryReturnedNoRows) => {
+                log::debug!("db miss: '{}' on {}", package, os_str)
+            }
+            _ => {}
+        }
         match result {
             Ok(mapping) => Ok(Some(mapping)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
