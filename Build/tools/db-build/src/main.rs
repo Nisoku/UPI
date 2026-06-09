@@ -27,8 +27,7 @@ fn main() {
 
     drop(conn);
 
-    let db_bytes = std::fs::read(&tmp)
-        .unwrap_or_else(|e| panic!("failed to read temp DB: {e}"));
+    let db_bytes = std::fs::read(&tmp).unwrap_or_else(|e| panic!("failed to read temp DB: {e}"));
 
     std::fs::remove_file(&tmp).ok();
 

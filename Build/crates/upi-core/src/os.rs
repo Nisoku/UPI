@@ -27,9 +27,9 @@ impl PlatformRegistry {
 
         for file in PLATFORM_DIR.files() {
             let name = file.path().file_stem().unwrap().to_str().unwrap();
-            let yaml = file.contents_utf8().ok_or_else(|| {
-                Error::PlatformConfig(format!("{name}: non-UTF-8 content"))
-            })?;
+            let yaml = file
+                .contents_utf8()
+                .ok_or_else(|| Error::PlatformConfig(format!("{name}: non-UTF-8 content")))?;
 
             let config: PlatformConfig = noyalib::from_str(yaml)
                 .map_err(|e| Error::PlatformConfig(format!("{name}: {e}")))?;

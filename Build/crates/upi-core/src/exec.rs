@@ -27,10 +27,7 @@ impl Command {
             (prog, a)
         };
 
-        Command {
-            program,
-            args,
-        }
+        Command { program, args }
     }
 
     pub fn to_display(&self) -> String {
@@ -48,9 +45,9 @@ impl Command {
             .map_err(|e| crate::error::Error::Exec(format!("failed to execute: {e}")))?;
 
         if !status.success() {
-            return Err(crate::error::Error::Exec(
-                format!("command exited with {status}"),
-            ));
+            return Err(crate::error::Error::Exec(format!(
+                "command exited with {status}"
+            )));
         }
 
         Ok(())

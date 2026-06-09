@@ -93,11 +93,9 @@ impl Database {
 
     pub fn seed_version(&self) -> Result<String> {
         self.conn
-            .query_row(
-                "SELECT value FROM meta WHERE key = 'version'",
-                [],
-                |row| row.get::<_, String>(0),
-            )
+            .query_row("SELECT value FROM meta WHERE key = 'version'", [], |row| {
+                row.get::<_, String>(0)
+            })
             .map_err(|e| Error::Database(e.to_string()))
     }
 }

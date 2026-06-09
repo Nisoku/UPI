@@ -1,4 +1,4 @@
-use upi_core::{Command, OsType, PlatformConfig, PlatformRegistry, Resolver, detect};
+use upi_core::{detect, Command, OsType, PlatformConfig, PlatformRegistry, Resolver};
 
 fn known_types() -> Vec<OsType> {
     vec![

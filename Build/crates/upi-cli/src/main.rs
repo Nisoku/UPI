@@ -13,9 +13,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Install {
-        package: String,
-    },
+    Install { package: String },
 }
 
 fn main() {
