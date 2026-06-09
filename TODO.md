@@ -1,17 +1,17 @@
 # TODO
 
-## Core thingy
+## Core Skeleton
 
-- [ ] Add error module
-- [ ] Add os module with detection + loader stubs
-- [ ] Add resolver module stub
-- [ ] Add exec module stub
-- [ ] Add db module stub
-- [ ] Add repology stub
+- [x] Add error module
+- [x] Add os module with detection + loader stubs
+- [x] Add resolver module stub
+- [x] Add exec module stub
+- [x] Add db module stub
+- [x] Add repology stub
 
 ## YAML OS Definitions
 
-- [ ] Add platform YAML schema
+- [ ] Add platform YAML schema (noyalib)
 - [ ] Add macOS YAML (Homebrew)
 - [ ] Add Debian/Ubuntu YAML (apt)
 - [ ] Add Fedora YAML (dnf)
@@ -19,7 +19,7 @@
 - [ ] Add Windows YAML (winget)
 - [ ] Add YAML loader that reads into a registry
 
-## Resolver
+## Resolver Pipeline
 
 - [ ] Implement platform detection
 - [ ] Load YAML registry
@@ -27,17 +27,17 @@
 - [ ] Build install command from YAML template
 - [ ] Execute or dry-run
 
-## DB Integration
+## Database Integration
 
-- [ ] Add SQLite schema
-- [ ] Add seed DB loader (include_bytes)
+- [ ] Add SQLite schema (rusqlite)
+- [ ] Add seed DB loader (include_bytes! + ruzstd)
 - [ ] Add DB lookup in resolver
 - [ ] Add DB update mechanism (GitHub Releases)
 
-## Repology
+## Repology Integration (upi-net)
 
-- [ ] Add Repology client
-- [ ] Add project to package mapping
+- [ ] Implement Repology client (ureq + serde_json)
+- [ ] Stream deserialize project to package mapping
 - [ ] Integrate into resolver pipeline
 
 ## Fallback Search using system package manager
@@ -48,10 +48,10 @@
 
 ## UX Polish
 
-- [ ] Add verbosity flags
+- [ ] Add verbosity flags (clap)
 - [ ] Add pretty output
 - [ ] Add error formatting
-- [ ] Add timing and debug logs
+- [ ] Add timing and debug logs (log + env_logger)
 
 ## Docs + CI
 

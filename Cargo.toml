@@ -3,6 +3,7 @@ resolver = "2"
 members = [
   "Build/crates/upi-core",
   "Build/crates/upi-cli",
+  "Build/crates/upi-net",
 ]
 
 [workspace.package]

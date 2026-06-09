@@ -10,3 +10,4 @@ path = "src/main.rs"
 
 [dependencies]
 upi-core = { path = "../upi-core" }
+upi-net = { path = "../upi-net" }
