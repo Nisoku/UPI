@@ -1,11 +1,16 @@
-use upi_core::{PlatformRegistry, OsType};
-use upi_net::{RepologyPackage, find_package_for_os};
+use upi_core::{OsType, PlatformRegistry};
+use upi_net::{find_package_for_os, RepologyPackage};
 
 fn registry() -> PlatformRegistry {
     PlatformRegistry::load().unwrap()
 }
 
-fn make_pkg(repo: &str, binname: Option<&str>, srcname: Option<&str>, visiblename: Option<&str>) -> RepologyPackage {
+fn make_pkg(
+    repo: &str,
+    binname: Option<&str>,
+    srcname: Option<&str>,
+    visiblename: Option<&str>,
+) -> RepologyPackage {
     RepologyPackage {
         repo: repo.to_string(),
         binname: binname.map(String::from),
@@ -32,14 +37,24 @@ fn finds_package_for_current_os() {
 
 #[test]
 fn prefers_binname_over_visiblename() {
-    let data = vec![make_pkg("homebrew", Some("ffmpeg-binary"), None, Some("ffmpeg-visible"))];
+    let data = vec![make_pkg(
+        "homebrew",
+        Some("ffmpeg-binary"),
+        None,
+        Some("ffmpeg-visible"),
+    )];
     let result = find_package_for_os(&data, &OsType::Macos, &registry());
     assert_eq!(result, Some("ffmpeg-binary".into()));
 }
 
 #[test]
 fn falls_back_to_srcname_when_no_binname() {
-    let data = vec![make_pkg("homebrew", None, Some("ffmpeg-source"), Some("ffmpeg-visible"))];
+    let data = vec![make_pkg(
+        "homebrew",
+        None,
+        Some("ffmpeg-source"),
+        Some("ffmpeg-visible"),
+    )];
     let result = find_package_for_os(&data, &OsType::Macos, &registry());
     assert_eq!(result, Some("ffmpeg-source".into()));
 }

@@ -33,11 +33,7 @@ fn main() {
     }
 }
 
-fn run_install(
-    package: &str,
-    dry_run: bool,
-    offline: bool,
-) -> Result<(), upi_core::Error> {
+fn run_install(package: &str, dry_run: bool, offline: bool) -> Result<(), upi_core::Error> {
     let registry = PlatformRegistry::load()?;
 
     let sources: Vec<Box<dyn PackageSource>> = if offline {

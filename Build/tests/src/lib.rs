@@ -6,3 +6,6 @@ mod database_matrix;
 
 #[cfg(test)]
 mod repology_matrix;
+
+#[cfg(test)]
+mod fallback_matrix;

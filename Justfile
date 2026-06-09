@@ -13,13 +13,16 @@ check:
 clippy:
     cargo clippy --all-targets
 
-fmt:
-    cargo fmt
+clippy-fix:
+    cargo clippy --fix --allow-dirty --all-targets
 
 clean:
     cargo clean
 
 release:
     cargo build --release
+
+format: 
+    cargo fmt
 
 all: check test

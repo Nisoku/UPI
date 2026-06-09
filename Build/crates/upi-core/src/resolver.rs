@@ -1,14 +1,11 @@
 use crate::db::Database;
 use crate::error::{Error, Result};
 use crate::exec::Command;
+use crate::fallback::FallbackSearcher;
 use crate::os::{detect, PlatformRegistry};
 
 pub trait PackageSource {
-    fn resolve_package(
-        &self,
-        package: &str,
-        os_type: &os_info::Type,
-    ) -> Result<Option<String>>;
+    fn resolve_package(&self, package: &str, os_type: &os_info::Type) -> Result<Option<String>>;
 }
 
 pub struct Resolver {
@@ -39,7 +36,11 @@ impl Resolver {
         sources: Vec<Box<dyn PackageSource>>,
     ) -> Result<Self> {
         let db = Database::open()?;
-        Ok(Self { registry, db, sources })
+        Ok(Self {
+            registry,
+            db,
+            sources,
+        })
     }
 
     pub fn resolve(&self, package: &str) -> Result<Command> {
@@ -84,6 +85,14 @@ impl Resolver {
 
         if let Some(mapping) = self.db.lookup(package, os_type)? {
             return Ok(mapping.os_package);
+        }
+
+        if let Some(config) = self.registry.for_type(os_type) {
+            if let Some(searcher) = FallbackSearcher::from_config(config) {
+                if let Some(name) = searcher.search(package)? {
+                    return Ok(name);
+                }
+            }
         }
 
         Ok(package.to_string())
