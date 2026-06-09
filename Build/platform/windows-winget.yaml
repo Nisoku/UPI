@@ -1,0 +1,10 @@
+targets:
+  - Windows
+manager: winget
+sudo: false
+install: winget install --exact {package}
+search: winget search {query}
+provides: winget search {binary}
+provides_parse: winget
+binary_paths:
+  - C:\Windows\System32

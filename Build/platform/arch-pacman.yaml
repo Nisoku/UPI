@@ -1,0 +1,16 @@
+targets:
+  - Arch
+  - Manjaro
+  - EndeavourOS
+  - Artix
+  - Garuda
+  - CachyOS
+manager: pacman
+sudo: true
+install: pacman -S {package}
+search: pacman -Ss {query}
+provides: pacman -Qo {binary}
+provides_parse: pacman_qo
+binary_paths:
+  - /usr/bin
+  - /usr/local/bin

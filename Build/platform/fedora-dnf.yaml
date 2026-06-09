@@ -1,0 +1,13 @@
+targets:
+  - Fedora
+  - Nobara
+  - Ultramarine
+manager: dnf
+sudo: true
+install: dnf install -y {package}
+search: dnf search {query}
+provides: dnf provides {binary}
+provides_parse: dnf
+binary_paths:
+  - /usr/bin
+  - /usr/local/bin

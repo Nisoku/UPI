@@ -1,0 +1,18 @@
+targets:
+  - Debian
+  - Ubuntu
+  - Mint
+  - Pop
+  - Elementary
+  - Zorin
+  - Kali
+  - Raspbian
+manager: apt
+sudo: true
+install: apt install -y {package}
+search: apt search {query}
+provides: apt-file search {binary}
+provides_parse: apt_file
+binary_paths:
+  - /usr/bin
+  - /usr/local/bin

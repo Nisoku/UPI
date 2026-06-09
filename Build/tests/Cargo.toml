@@ -1,0 +1,10 @@
+[package]
+name = "upi-tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+upi-core = { path = "../crates/upi-core" }
+upi-net = { path = "../crates/upi-net" }

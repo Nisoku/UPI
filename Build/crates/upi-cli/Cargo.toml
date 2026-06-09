@@ -11,3 +11,4 @@ path = "src/main.rs"
 [dependencies]
 upi-core = { path = "../upi-core" }
 upi-net = { path = "../upi-net" }
+clap = { version = "4", features = ["derive"] }

@@ -1,31 +1,23 @@
 # TODO
 
-## Core Skeleton
-
-- [x] Add error module
-- [x] Add os module with detection + loader stubs
-- [x] Add resolver module stub
-- [x] Add exec module stub
-- [x] Add db module stub
-- [x] Add repology stub
-
 ## YAML OS Definitions
 
-- [ ] Add platform YAML schema (noyalib)
-- [ ] Add macOS YAML (Homebrew)
-- [ ] Add Debian/Ubuntu YAML (apt)
-- [ ] Add Fedora YAML (dnf)
-- [ ] Add Arch YAML (pacman)
-- [ ] Add Windows YAML (winget)
-- [ ] Add YAML loader that reads into a registry
+- [x] Define YAML schema (noyalib)
+- [x] Add macOS YAML (Homebrew)
+- [x] Add Debian/Ubuntu YAML (apt)
+- [x] Add Fedora YAML (dnf)
+- [x] Add Arch YAML (pacman)
+- [x] Add Windows YAML (winget)
+- [x] Add YAML loader
 
 ## Resolver Pipeline
 
-- [ ] Implement platform detection
-- [ ] Load YAML registry
+- [x] Implement platform detection (os_info)
+- [x] Load YAML registry (include_dir + noyalib)
 - [ ] Resolve package name (identity mapping stub)
 - [ ] Build install command from YAML template
 - [ ] Execute or dry-run
+- [ ] Add tests for resolver
 
 ## Database Integration
 
@@ -33,18 +25,21 @@
 - [ ] Add seed DB loader (include_bytes! + ruzstd)
 - [ ] Add DB lookup in resolver
 - [ ] Add DB update mechanism (GitHub Releases)
+- [ ] Add tests for database
 
 ## Repology Integration (upi-net)
 
 - [ ] Implement Repology client (ureq + serde_json)
 - [ ] Stream deserialize project to package mapping
 - [ ] Integrate into resolver pipeline
+- [ ] Add tests for Repology
 
 ## Fallback Search using system package manager
 
 - [ ] Add fallback search commands from YAML
 - [ ] Integrate into resolver pipeline
 - [ ] Add heuristics for best match
+- [ ] Add tests for fallback
 
 ## UX Polish
 

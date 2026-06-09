@@ -1,0 +1,11 @@
+targets:
+  - Macos
+manager: homebrew
+sudo: false
+install: brew install {package}
+search: brew search {query}
+provides: brew info {package}
+provides_parse: brew
+binary_paths:
+  - /usr/local/bin
+  - /opt/homebrew/bin

@@ -1,0 +1,10 @@
+targets:
+  - Windows
+manager: chocolatey
+sudo: true
+install: choco install -y {package}
+search: choco search {query}
+provides: choco search {binary}
+provides_parse: chocolatey
+binary_paths:
+  - C:\ProgramData\chocolatey\bin

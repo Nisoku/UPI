@@ -3,3 +3,10 @@ name = "upi-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+noyalib = "0.0.7"
+os_info = "3"
+include_dir = "0.7"
+shlex = "2.0.1"
