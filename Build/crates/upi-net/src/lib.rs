@@ -1,3 +1,5 @@
+//! Network-backed package resolution: Repology client, types, and error handling.
+
 pub mod error;
 pub mod repology;
 

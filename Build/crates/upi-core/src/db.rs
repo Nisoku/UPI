@@ -10,23 +10,35 @@ const SEED_VERSION: &str = include_str!("../../../data/seed-version.txt");
 const META_FILE: &str = "meta.json";
 const DB_FILE: &str = "seed.db";
 
+/// A resolved package name for a specific OS, with provenance metadata.
 #[derive(Debug, Clone)]
 pub struct Mapping {
+    /// The package name as known to the target OS package manager.
     pub os_package: String,
+    /// Provenance of this mapping: `repology_auto`, `derived`, `winget_direct`, etc.
     pub source: String,
+    /// Confidence score in `[0, 1]` where higher values indicate a more direct mapping.
     pub confidence: f64,
+    /// Optional notes about the mapping, such as version constraints.
     pub notes: Option<String>,
 }
 
+/// Seeded SQLite database mapping canonical package names to OS-specific names.
 pub struct Database {
     conn: Connection,
 }
 
 impl Database {
+    /// Open the database at the default cache directory (`~/.upi/db/`).
+    ///
+    /// Rehydrates from the embedded `seed.db.zst` if the cached version is stale or absent.
     pub fn open() -> Result<Self> {
         Self::open_at(&cache_dir_path())
     }
 
+    /// Open the database at a specific cache directory path.
+    ///
+    /// Rehydrates from the embedded `seed.db.zst` if the cached version is stale or absent.
     pub fn open_at(cache_dir: &Path) -> Result<Self> {
         std::fs::create_dir_all(cache_dir).map_err(Error::Io)?;
 
@@ -48,6 +60,10 @@ impl Database {
         Ok(Self { conn })
     }
 
+    /// Look up a package name for a given OS in the seed database.
+    ///
+    /// Resolves aliases first, then queries the `mappings` table ordered by confidence.
+    /// Returns `Ok(None)` when no mapping exists.
     pub fn lookup(&self, package: &str, os_type: &os_info::Type) -> Result<Option<Mapping>> {
         let canonical = self.resolve_alias(package)?;
         let os_str = format!("{:?}", os_type);
@@ -98,6 +114,9 @@ impl Database {
         }
     }
 
+    /// Search the database for packages matching `query` (case-insensitive `LIKE`).
+    ///
+    /// Returns up to 20 results for the given OS, ordered by confidence descending.
     pub fn search(&self, query: &str, os_type: &os_info::Type) -> Result<Vec<Mapping>> {
         let os_str = format!("{:?}", os_type);
         let pattern = format!("%{}%", query.to_lowercase());
@@ -149,6 +168,7 @@ impl Database {
         }
     }
 
+    /// Read the embedded seed version from the database `meta` table.
     pub fn seed_version(&self) -> Result<String> {
         self.conn
             .query_row("SELECT value FROM meta WHERE key = 'version'", [], |row| {
@@ -156,6 +176,12 @@ impl Database {
             })
             .map_err(|e| Error::Database(e.to_string()))
     }
+}
+
+/// Directory for caching Repology API responses (`~/.upi/cache/repology/`).
+pub fn repology_cache_dir() -> PathBuf {
+    let base = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    base.join(".upi").join("cache").join("repology")
 }
 
 fn cache_dir_path() -> PathBuf {
@@ -190,7 +216,8 @@ fn write_meta(meta_path: &Path) -> Result<()> {
         "updated_at": now,
     });
 
-    let content = serde_json::to_string_pretty(&meta).unwrap();
+    let content =
+        serde_json::to_string_pretty(&meta).expect("serde_json::Value is always serializable");
     std::fs::write(meta_path, content).map_err(|e| Error::Database(format!("{e}")))
 }
 

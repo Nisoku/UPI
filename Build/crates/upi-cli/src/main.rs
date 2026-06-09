@@ -90,10 +90,10 @@ fn build_sources(
 }
 
 fn run(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
-    let registry = PlatformRegistry::load()?;
-    let os_type = resolve_os(&registry, &cli.os);
-    let sources = build_sources(&registry, cli.offline)?;
-    let resolver = Resolver::with_registry_and_sources(registry, sources)?;
+    let registry = PlatformRegistry::global();
+    let os_type = resolve_os(registry, &cli.os);
+    let sources = build_sources(registry, cli.offline)?;
+    let resolver = Resolver::with_registry_and_sources(registry.clone(), sources)?;
     let cmd = resolver.resolve_for_os(package, &os_type)?;
 
     if cli.dry_run {
@@ -106,16 +106,16 @@ fn run(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
 }
 
 fn run_search(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
-    let registry = PlatformRegistry::load()?;
-    let os_type = resolve_os(&registry, &cli.os);
-    let sources = build_sources(&registry, cli.offline)?;
+    let registry = PlatformRegistry::global();
+    let os_type = resolve_os(registry, &cli.os);
+    let sources = build_sources(registry, cli.offline)?;
 
     let (manager, config_clone) = {
         let c = registry.for_type(&os_type);
         (c.map(|c| c.manager.clone()), c.cloned())
     };
 
-    let resolver = Resolver::with_registry_and_sources(registry, sources)?;
+    let resolver = Resolver::with_registry_and_sources(registry.clone(), sources)?;
     let candidates = resolver.search_candidates(package, &os_type)?;
 
     println!(" OS:       {os_type:?}");

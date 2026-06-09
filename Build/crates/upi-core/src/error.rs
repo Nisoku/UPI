@@ -1,13 +1,21 @@
 use std::fmt;
 
+/// Errors that can occur during UPI operations.
 #[derive(Debug)]
 pub enum Error {
+    /// The detected or specified OS has no matching platform config.
     UnsupportedOs(String),
+    /// A YAML platform definition is malformed or missing required fields.
     PlatformConfig(String),
+    /// Package resolution failed across all available sources.
     Resolve(String),
+    /// The install command or a subprocess failed.
     Exec(String),
+    /// Database open, query, or rehydration failed.
     Database(String),
+    /// A network request failed (HTTP, DNS, timeout).
     Network(String),
+    /// An underlying I/O operation failed.
     Io(std::io::Error),
 }
 
@@ -40,4 +48,5 @@ impl From<std::io::Error> for Error {
     }
 }
 
+/// Convenience alias for `Result<T, upi_core::Error>`.
 pub type Result<T> = std::result::Result<T, Error>;

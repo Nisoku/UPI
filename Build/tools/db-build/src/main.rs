@@ -1,8 +1,13 @@
 use std::path::PathBuf;
 
+const MIN_DIVISOR: f64 = 1.0; // prevent division by zero in ratio calculation
+
 fn data_dir() -> PathBuf {
     let cargo_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    cargo_dir.join("../../data/").canonicalize().unwrap()
+    cargo_dir
+        .join("../../data/")
+        .canonicalize()
+        .expect("../../data/ must exist relative to CARGO_MANIFEST_DIR")
 }
 
 fn main() {
@@ -45,6 +50,6 @@ fn main() {
         "seed.db.zst generated: {:.1} KB -> {:.1} KB (ratio: {:.2}x)",
         original_kb,
         compressed_kb,
-        original_kb / compressed_kb.max(1.0)
+        original_kb / compressed_kb.max(MIN_DIVISOR)
     );
 }

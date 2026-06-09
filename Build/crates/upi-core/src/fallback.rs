@@ -2,11 +2,15 @@ use crate::error::Result;
 use crate::os::PlatformConfig;
 use crate::resolver::PackageSource;
 
+/// Searches for packages using the OS package manager's own search command.
+///
+/// Used as a last-resort source when Repology and the local database have no match.
 pub struct FallbackSearcher {
     search_template: String,
 }
 
 impl FallbackSearcher {
+    /// Create a searcher from a platform config's `search` template, if defined.
     pub fn from_config(config: &PlatformConfig) -> Option<Self> {
         let template = config.search.as_ref()?;
         Some(Self {
@@ -14,6 +18,7 @@ impl FallbackSearcher {
         })
     }
 
+    /// Run the search command and parse its output for a matching package name.
     pub fn search(&self, query: &str) -> Result<Option<String>> {
         let cmd_str = self.search_template.replace("{query}", query);
         log::debug!("fallback: running {cmd_str}");
@@ -41,6 +46,10 @@ impl PackageSource for FallbackSearcher {
     }
 }
 
+/// Parse the stdout of a package manager search command and return the first relevant package name.
+///
+/// Scans lines for the query (case-insensitive), skips headers and separators,
+/// extracts the package name from formats like `name --> description` or `name  version`.
 pub fn parse_search_output(output: &str, query: &str) -> Option<String> {
     let query_lower = query.to_lowercase();
 

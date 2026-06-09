@@ -6,21 +6,32 @@ use crate::exec::Command;
 use crate::fallback::FallbackSearcher;
 use crate::os::{detect, PlatformRegistry};
 
+/// A source that can resolve or search for packages for a given OS.
 pub trait PackageSource {
+    /// Resolve a package name to the OS-specific name, if known.
     fn resolve_package(&self, package: &str, os_type: &os_info::Type) -> Result<Option<String>>;
 
+    /// Search for packages matching a query string.
+    ///
+    /// Default returns `Ok(None)` so sources that lack search skip it without boilerplate.
     fn search_packages(&self, query: &str, os_type: &os_info::Type) -> Result<Option<Vec<String>>> {
         let _ = (query, os_type);
         Ok(None)
     }
 }
 
+/// A package name found during search, with its provenance label.
 #[derive(Debug, Clone)]
 pub struct ResolveCandidate {
+    /// The OS-specific package name.
     pub name: String,
+    /// Where this candidate was found: `repology`, `database`, `fallback search`, etc.
     pub source: String,
 }
 
+/// Orchestrates package resolution across multiple sources: Repology, database, fallback, identity.
+///
+/// Tries network sources first, then local database, fallback search, and finally identity pass-through.
 pub struct Resolver {
     registry: PlatformRegistry,
     db: Database,
@@ -28,8 +39,11 @@ pub struct Resolver {
 }
 
 impl Resolver {
+    /// Create a resolver with default settings and an empty source list.
+    ///
+    /// Uses the global `PlatformRegistry` and the default database path.
     pub fn new() -> Result<Self> {
-        let registry = PlatformRegistry::load()?;
+        let registry = PlatformRegistry::global().clone();
         let db = Database::open()?;
         Ok(Self {
             registry,
@@ -38,12 +52,14 @@ impl Resolver {
         })
     }
 
+    /// Create a resolver with a custom set of network/source providers.
     pub fn with_sources(sources: Vec<Box<dyn PackageSource>>) -> Result<Self> {
         let mut resolver = Self::new()?;
         resolver.sources = sources;
         Ok(resolver)
     }
 
+    /// Create a resolver with a specific registry and source list (for testing / offline mode).
     pub fn with_registry_and_sources(
         registry: PlatformRegistry,
         sources: Vec<Box<dyn PackageSource>>,
@@ -56,12 +72,14 @@ impl Resolver {
         })
     }
 
+    /// Resolve a package name to an install command for the detected OS.
     pub fn resolve(&self, package: &str) -> Result<Command> {
         let os_type = detect();
         log::debug!("detected OS: {os_type:?}");
         self.resolve_for_os(package, &os_type)
     }
 
+    /// Resolve a package name to an install command for a specific OS.
     pub fn resolve_for_os(&self, package: &str, os_type: &os_info::Type) -> Result<Command> {
         let config = self
             .registry
@@ -75,6 +93,7 @@ impl Resolver {
         Ok(Command::from_config(config, &os_package))
     }
 
+    /// Resolve with full provenance: returns `(command, os_package, source_label, manager_name)`.
     pub fn resolve_detailed(
         &self,
         package: &str,
@@ -91,6 +110,9 @@ impl Resolver {
         Ok((cmd, os_package, source, config.manager.clone()))
     }
 
+    /// Resolve a package and return the command plus the database mapping, if any.
+    ///
+    /// Only checks the local database. Does not consult network sources or fallback.
     pub fn resolve_with_provenance(
         &self,
         package: &str,
@@ -99,6 +121,9 @@ impl Resolver {
         self.resolve_with_provenance_for_os(package, &os_type)
     }
 
+    /// Resolve for a specific OS and return the command plus the database mapping, if any.
+    ///
+    /// Only checks the local database. Does not consult network sources or fallback.
     pub fn resolve_with_provenance_for_os(
         &self,
         package: &str,
@@ -118,6 +143,9 @@ impl Resolver {
         Ok((Command::from_config(config, &os_package), mapping))
     }
 
+    /// Search for packages across all sources: Repology, database, fallback, and identity.
+    ///
+    /// Deduplicates by package name. Returns candidates ordered by source priority.
     pub fn search_candidates(
         &self,
         query: &str,

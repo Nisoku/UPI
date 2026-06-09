@@ -1,13 +1,19 @@
 use crate::error::Result;
 use crate::os::PlatformConfig;
 
+/// A platform install command with template substitution and sudo wrapping.
 #[derive(Debug)]
 pub struct Command {
+    /// Program to execute: `apt`, `sudo`, `brew`, etc.
     pub program: String,
+    /// Arguments passed to the program.
     pub args: Vec<String>,
 }
 
 impl Command {
+    /// Build a `Command` from a platform config, substituting `{package}` in the install template.
+    ///
+    /// If the config has `sudo: true`, the command is wrapped with `sudo <program> <args>`.
     pub fn from_config(config: &PlatformConfig, package: &str) -> Self {
         let template = &config.install;
         let cmd_str = template.replace("{package}", package);
@@ -30,6 +36,7 @@ impl Command {
         Command { program, args }
     }
 
+    /// Format the command as a human-readable string (for `--dry-run` display).
     pub fn to_display(&self) -> String {
         if self.program == "sudo" {
             format!("sudo {}", self.args.join(" "))
@@ -38,6 +45,9 @@ impl Command {
         }
     }
 
+    /// Execute the command and wait for completion.
+    ///
+    /// Returns `Err(Error::Exec)` if the process fails to start or exits non-zero.
     pub fn run(&self) -> Result<()> {
         let status = std::process::Command::new(&self.program)
             .args(&self.args)

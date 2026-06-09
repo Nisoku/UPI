@@ -14,6 +14,10 @@ const USER_AGENT: &str = concat!(
 const REPOLOGY_BASE: &str = "https://repology.org/api/v1";
 const RATE_LIMIT_MS: u64 = 1100;
 const PAGE_SIZE: usize = 200;
+const CONFIDENCE_REPOLOGY: f64 = 1.0;
+const CONFIDENCE_DERIVED: f64 = 0.9;
+const CONFIDENCE_WINGET: f64 = 1.0;
+const MIN_DIVISOR: f64 = 1.0; // prevent division by zero in ratio calculation
 
 #[derive(Debug, Deserialize)]
 struct RepologyPackage {
@@ -105,7 +109,10 @@ fn fetch_page(client: &ureq::Agent, cursor: &str) -> Result<RepologyPage, String
 
 fn db_path() -> PathBuf {
     let cargo_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    cargo_dir.join("../../data/").canonicalize().unwrap()
+    cargo_dir
+        .join("../../data/")
+        .canonicalize()
+        .expect("../../data/ must exist relative to CARGO_MANIFEST_DIR")
 }
 
 fn build_db_schema(conn: &Connection) -> Result<(), String> {
@@ -141,8 +148,8 @@ fn insert_candidate(
         let os_str = format!("{:?}", os_type);
         tx.execute(
             "INSERT OR IGNORE INTO mappings (package_id, os, os_package, source, confidence)
-             VALUES (?1, ?2, ?3, 'repology_auto', 1.0)",
-            rusqlite::params![package_id, os_str, os_package],
+             VALUES (?1, ?2, ?3, 'repology_auto', ?4)",
+            rusqlite::params![package_id, os_str, os_package, CONFIDENCE_REPOLOGY],
         )
         .map_err(|e| format!("insert mapping: {e}"))?;
 
@@ -154,8 +161,8 @@ fn insert_candidate(
                 let deriv_str = format!("{:?}", derivative);
                 tx.execute(
                     "INSERT OR IGNORE INTO mappings (package_id, os, os_package, source, confidence)
-                     VALUES (?1, ?2, ?3, 'derived', 0.9)",
-                    rusqlite::params![package_id, deriv_str, os_package],
+                     VALUES (?1, ?2, ?3, 'derived', ?4)",
+                    rusqlite::params![package_id, deriv_str, os_package, CONFIDENCE_DERIVED],
                 )
                 .map_err(|e| format!("insert derived mapping: {e}"))?;
             }
@@ -182,10 +189,7 @@ fn fetch_winget_index(client: &ureq::Agent) -> Result<Vec<WingetIndexItem>, Stri
     serde_json::from_str(&body).map_err(|e| format!("winget index JSON parse: {e}"))
 }
 
-fn inject_winget_mappings(
-    conn: &Connection,
-    items: &[WingetIndexItem],
-) -> Result<usize, String> {
+fn inject_winget_mappings(conn: &Connection, items: &[WingetIndexItem]) -> Result<usize, String> {
     let mut stmt = conn
         .prepare("SELECT id, name FROM packages")
         .map_err(|e| format!("select packages: {e}"))?;
@@ -206,7 +210,7 @@ fn inject_winget_mappings(
         let mut insert = tx
             .prepare(
                 "INSERT OR IGNORE INTO mappings (package_id, os, os_package, source, confidence)
-                 VALUES (?1, ?2, ?3, 'winget_direct', 1.0)",
+                 VALUES (?1, ?2, ?3, 'winget_direct', ?4)",
             )
             .map_err(|e| format!("prepare insert mapping: {e}"))?;
 
@@ -227,6 +231,7 @@ fn inject_winget_mappings(
                             pkg_id,
                             os_str,
                             item.package_id,
+                            CONFIDENCE_WINGET
                         ])
                         .map_err(|e| format!("insert mapping: {e}"))?;
                     matched += 1;
@@ -374,9 +379,7 @@ fn main() {
             log::info!("fetched {} winget packages", winget_items.len());
             match inject_winget_mappings(&conn, &winget_items) {
                 Ok(matched) => {
-                    log::info!(
-                        "matched {matched} winget packages to existing DB entries"
-                    );
+                    log::info!("matched {matched} winget packages to existing DB entries");
                 }
                 Err(e) => {
                     log::warn!("error injecting winget mappings: {e}");
@@ -417,6 +420,6 @@ fn main() {
         "seed.db.zst generated: {:.1} KB -> {:.1} KB (ratio: {:.2}x, {package_count} packages)",
         original_kb,
         compressed_kb,
-        original_kb / compressed_kb.max(1.0)
+        original_kb / compressed_kb.max(MIN_DIVISOR)
     );
 }
