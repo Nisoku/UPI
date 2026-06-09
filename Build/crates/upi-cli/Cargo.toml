@@ -1,0 +1,12 @@
+[package]
+name = "upi-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "upi"
+path = "src/main.rs"
+
+[dependencies]
+upi-core = { path = "../upi-core" }

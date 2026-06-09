@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+members = [
+  "Build/crates/upi-core",
+  "Build/crates/upi-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
