@@ -7,10 +7,10 @@ targets:
   - CachyOS
 manager: pacman
 sudo: true
-install: pacman -S {package}
+install: pacman -S --noconfirm {package}
 search: pacman -Ss {query}
-provides: pacman -Qo {binary}
-provides_parse: pacman_qo
+provides: pacman -F {binary}
+provides_parse: pacman_f
 binary_paths:
   - /usr/bin
   - /usr/local/bin

@@ -1,0 +1,12 @@
+targets:
+  - Alpine
+manager: apk
+sudo: true
+install: apk add {package}
+search: apk search {query}
+provides: apk info --who-owns {binary}
+provides_parse: apk_info
+binary_paths:
+  - /bin
+  - /usr/bin
+  - /usr/local/bin

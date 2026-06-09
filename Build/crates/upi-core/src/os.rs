@@ -1,4 +1,5 @@
 use include_dir::{include_dir, Dir};
+use noyalib;
 use serde::Deserialize;
 
 use crate::error::{Error, Result};
@@ -22,20 +23,32 @@ pub struct PlatformRegistry {
     configs: Vec<PlatformConfig>,
 }
 
+impl PlatformConfig {
+    /// Return binary paths with environment variables expanded.
+    pub fn expanded_binary_paths(&self) -> Vec<String> {
+        self.binary_paths.iter().map(|p| expand_env(p)).collect()
+    }
+}
+
 impl PlatformRegistry {
     pub fn load() -> Result<Self> {
         let mut configs = Vec::new();
 
         for file in PLATFORM_DIR.files() {
             let name = file.path().file_stem().unwrap().to_str().unwrap();
-            let yaml = file
+            let yaml_str = file
                 .contents_utf8()
                 .ok_or_else(|| Error::PlatformConfig(format!("{name}: non-UTF-8 content")))?;
 
-            let config: PlatformConfig = noyalib::from_str(yaml)
-                .map_err(|e| Error::PlatformConfig(format!("{name}: {e}")))?;
-
-            configs.push(config);
+            match noyalib::from_str::<PlatformConfig>(yaml_str) {
+                Ok(config) => configs.push(config),
+                Err(e) => {
+                    if yaml_str.trim().is_empty() {
+                        continue;
+                    }
+                    return Err(Error::PlatformConfig(format!("{name}: {e}")));
+                }
+            }
         }
 
         Ok(Self { configs })
@@ -114,6 +127,75 @@ fn normalize_repo_name(repo: &str) -> String {
             }
         }
     }
+    result
+}
+
+/// Expand environment variables in a string.
+///
+/// Supports Windows-style `%VAR%` and Unix-style `$VAR` / `${VAR}`.
+/// Unset variables are left as-is to allow fallback resolution.
+pub fn expand_env(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let mut chars = s.chars().peekable();
+
+    while let Some(c) = chars.next() {
+        match c {
+            '%' => {
+                let mut var = String::new();
+                for ch in chars.by_ref() {
+                    if ch == '%' {
+                        break;
+                    }
+                    var.push(ch);
+                }
+                match std::env::var(&var) {
+                    Ok(val) => result.push_str(&val),
+                    Err(_) => {
+                        result.push('%');
+                        result.push_str(&var);
+                        result.push('%');
+                    }
+                }
+            }
+            '$' => {
+                if chars.peek() == Some(&'{') {
+                    chars.next();
+                    let mut var = String::new();
+                    for ch in chars.by_ref() {
+                        if ch == '}' {
+                            break;
+                        }
+                        var.push(ch);
+                    }
+                    match std::env::var(&var) {
+                        Ok(val) => result.push_str(&val),
+                        Err(_) => {
+                            result.push_str(&format!("${{{var}}}"));
+                        }
+                    }
+                } else {
+                    let mut var = String::new();
+                    while let Some(&ch) = chars.peek() {
+                        if ch.is_alphanumeric() || ch == '_' {
+                            var.push(ch);
+                            chars.next();
+                        } else {
+                            break;
+                        }
+                    }
+                    match std::env::var(&var) {
+                        Ok(val) => result.push_str(&val),
+                        Err(_) => {
+                            result.push('$');
+                            result.push_str(&var);
+                        }
+                    }
+                }
+            }
+            other => result.push(other),
+        }
+    }
+
     result
 }
 

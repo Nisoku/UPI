@@ -195,6 +195,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "db-update"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "log",
+ "rusqlite",
+ "ruzstd",
+ "serde",
+ "serde_json",
+ "upi-core",
+ "ureq",
+ "url",
+]
+
+[[package]]
 name = "dirs"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

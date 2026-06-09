@@ -1,0 +1,12 @@
+targets:
+  - Gentoo
+manager: emerge
+sudo: true
+install: emerge --ask=n {package}
+search: emerge --search {query}
+provides: equery belongs {binary}
+provides_parse: equery
+binary_paths:
+  - /bin
+  - /usr/bin
+  - /usr/local/bin

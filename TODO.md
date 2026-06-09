@@ -1,17 +1,12 @@
 # TODO
 
+- [ ] Add indicator while UPI is loading
+- [ ] Language package managers? with an autodetect setup at the beginning that detects all managers you have installed
+- [ ] Caching everywhere possible to ease the burden on Repology and servers and stuff
+
 ## Database Integration
 
 - [ ] Add DB update mechanism (GitHub Actions (look at how chromebrew does it))
-
-## Logging + UX Polish
-
-- [X] Add verbosity flags (clap)
-- [X] Add pretty output
-- [X] Add error formatting
-- [X] Add timing and debug logs (`log` + `env_logger`)
-- [X] `--os` override flag (test install commands for any platform)
-- [X] `search` subcommand (`upi search <query>`)
 
 ## Docs + CI
 
@@ -26,8 +21,8 @@
 
 ## Seed DB
 
-- [ ] Add DB update mechanism (GitHub Actions)
-- [ ] Expand from 20 to 50+ common packages
+- [ ] Add DB update mechanism (GitHub Actions, every 2-3 weeks)
+- [X] Expand from 20 to 50+ common packages
 
 ## Rust Tooling
 

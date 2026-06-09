@@ -1,0 +1,13 @@
+targets:
+  - FreeBSD
+  - DragonFly
+manager: pkg
+sudo: true
+install: pkg install -y {package}
+search: pkg search {query}
+provides: pkg which {binary}
+provides_parse: pkg_which
+binary_paths:
+  - /usr/bin
+  - /usr/local/bin
+  - /usr/local/sbin

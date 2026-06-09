@@ -134,7 +134,7 @@ fn search_response_filters_by_os() {
     let data: RepologySearchResponse = serde_json::from_str(json).unwrap();
 
     let mut results = Vec::new();
-    for (_project, packages) in &data {
+    for packages in data.values() {
         if let Some(os_name) = find_package_for_os(packages, &OsType::Macos, &registry()) {
             results.push(os_name);
         }

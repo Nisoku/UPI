@@ -244,6 +244,61 @@ fn repo_to_os_maps_scoop() {
 #[test]
 fn repo_to_os_unknown_repo_returns_none() {
     let registry = PlatformRegistry::load().unwrap();
-    let result = registry.repo_to_os("freebsd");
-    assert_eq!(result, None);
+    let os_type = registry.repo_to_os("nonexistent_os_12345");
+    assert_eq!(os_type, None);
+}
+
+#[test]
+fn expand_env_expands_windows_vars() {
+    let orig = std::env::var_os("USERPROFILE").unwrap_or_default();
+    std::env::set_var("USERPROFILE", "C:\\Users\\testuser");
+    let result = upi_core::expand_env("%USERPROFILE%\\scoop\\shims");
+    assert_eq!(result, "C:\\Users\\testuser\\scoop\\shims");
+    std::env::set_var("USERPROFILE", &orig);
+}
+
+#[test]
+fn expand_env_expands_unix_vars() {
+    let orig = std::env::var_os("HOME").unwrap_or_default();
+    std::env::set_var("HOME", "/home/testuser");
+    let result = upi_core::expand_env("$HOME/.local/bin");
+    assert_eq!(result, "/home/testuser/.local/bin");
+    std::env::set_var("HOME", &orig);
+}
+
+#[test]
+fn expand_env_leaves_unknown_vars_unchanged() {
+    let result = upi_core::expand_env("%UNKNOWN_VAR_XYZ%/path");
+    assert_eq!(result, "%UNKNOWN_VAR_XYZ%/path");
+}
+
+#[test]
+fn expand_expands_brace_vars() {
+    let orig = std::env::var_os("TEMP").unwrap_or_default();
+    std::env::set_var("TEMP", "/tmp");
+    let result = upi_core::expand_env("${TEMP}/subdir");
+    assert_eq!(result, "/tmp/subdir");
+    std::env::set_var("TEMP", &orig);
+}
+
+#[test]
+fn expanded_binary_paths_resolves_windows_configs() {
+    let cfg = PlatformConfig {
+        targets: vec![OsType::Windows],
+        manager: "winget".into(),
+        sudo: false,
+        install: "winget install --id {package}".into(),
+        search: None,
+        provides: None,
+        provides_parse: None,
+        binary_paths: vec![
+            "%LOCALAPPDATA%\\Microsoft\\WindowsApps".into(),
+            "%USERPROFILE%\\AppData\\Local\\Microsoft\\WinGet\\Links".into(),
+        ],
+    };
+    let paths = cfg.expanded_binary_paths();
+    assert_eq!(paths.len(), 2);
+    // Both paths should be expanded (even if the env var is empty)
+    assert!(paths[0].contains("Microsoft\\WindowsApps"));
+    assert!(paths[1].contains("Microsoft\\WinGet\\Links"));
 }

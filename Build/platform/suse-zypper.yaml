@@ -1,0 +1,12 @@
+targets:
+  - openSUSE
+  - SUSE
+manager: zypper
+sudo: true
+install: zypper --non-interactive install {package}
+search: zypper search {query}
+provides: zypper wp {binary}
+provides_parse: zypper_wp
+binary_paths:
+  - /usr/bin
+  - /usr/local/bin

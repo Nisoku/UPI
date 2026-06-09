@@ -1,0 +1,17 @@
+[package]
+name = "db-update"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+upi-core = { path = "../../crates/upi-core" }
+ureq = "3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.40.1", features = ["bundled"] }
+ruzstd = "0.8"
+url = "2"
+log = "0.4"
+env_logger = "0.11.10"

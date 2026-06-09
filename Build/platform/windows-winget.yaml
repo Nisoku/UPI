@@ -2,9 +2,12 @@ targets:
   - Windows
 manager: winget
 sudo: false
-install: winget install --exact {package}
+install: winget install --exact --silent --accept-package-agreements --accept-source-agreements {package}
 search: winget search {query}
 provides: winget search {binary}
 provides_parse: winget
 binary_paths:
-  - C:\Windows\System32
+  - C:\LocalAppPackages
+  - C:\Program Files
+  - C:\Program Files (x86)
+  - %LOCALAPPDATA%\Microsoft\WindowsApps

@@ -1,0 +1,11 @@
+targets:
+  - Void
+manager: xbps
+sudo: true
+install: xbps-install -Sy {package}
+search: xbps-query -Rs {query}
+provides: xbps-query -Ro {binary}
+provides_parse: xbps
+binary_paths:
+  - /usr/bin
+  - /usr/local/bin
