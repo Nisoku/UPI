@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
-use upi_core::Resolver;
+use upi_core::{PackageSource, PlatformRegistry, Resolver};
+use upi_net::RepologyClient;
 
 #[derive(Parser)]
 #[command(name = "upi", version, about = "Universal Package Installer")]
@@ -9,6 +10,9 @@ struct Cli {
 
     #[arg(long, global = true)]
     dry_run: bool,
+
+    #[arg(long, global = true, help = "Skip network lookups")]
+    offline: bool,
 }
 
 #[derive(Subcommand)]
@@ -20,7 +24,7 @@ fn main() {
     let cli = Cli::parse();
 
     let result = match &cli.command {
-        Commands::Install { package } => run_install(package, cli.dry_run),
+        Commands::Install { package } => run_install(package, cli.dry_run, cli.offline),
     };
 
     if let Err(e) = result {
@@ -29,8 +33,22 @@ fn main() {
     }
 }
 
-fn run_install(package: &str, dry_run: bool) -> Result<(), upi_core::Error> {
-    let resolver = Resolver::new()?;
+fn run_install(
+    package: &str,
+    dry_run: bool,
+    offline: bool,
+) -> Result<(), upi_core::Error> {
+    let registry = PlatformRegistry::load()?;
+
+    let sources: Vec<Box<dyn PackageSource>> = if offline {
+        Vec::new()
+    } else {
+        let client = RepologyClient::new(registry.clone())
+            .map_err(|e| upi_core::Error::Network(format!("repology: {e}")))?;
+        vec![Box::new(client)]
+    };
+
+    let resolver = Resolver::with_registry_and_sources(registry, sources)?;
     let cmd = resolver.resolve(package)?;
 
     if dry_run {

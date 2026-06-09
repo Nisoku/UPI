@@ -1,0 +1,11 @@
+targets:
+  - Windows
+manager: scoop
+sudo: false
+install: scoop install {package}
+search: scoop search {query}
+provides: scoop search {binary}
+provides_parse: scoop
+binary_paths:
+  - ~\scoop\shims
+  - C:\Users\*\scoop\shims

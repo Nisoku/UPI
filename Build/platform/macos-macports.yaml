@@ -1,0 +1,11 @@
+targets:
+  - Macos
+manager: macports
+sudo: true
+install: port install {package}
+search: port search {query}
+provides: port provides {binary}
+provides_parse: macports
+binary_paths:
+  - /opt/local/bin
+  - /opt/local/sbin

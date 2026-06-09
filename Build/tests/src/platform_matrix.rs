@@ -15,12 +15,6 @@ fn known_types() -> Vec<OsType> {
 }
 
 #[test]
-fn load_all_configs() {
-    let registry = PlatformRegistry::load().unwrap();
-    assert!(registry.all().len() >= 5);
-}
-
-#[test]
 fn every_known_type_has_a_config() {
     let registry = PlatformRegistry::load().unwrap();
     for t in known_types() {
@@ -119,4 +113,88 @@ fn detect_returns_expected_type() {
         known_types().contains(&os_type),
         "unexpected OS type: {os_type:?}"
     );
+}
+
+#[test]
+fn repo_to_os_maps_homebrew() {
+    let registry = PlatformRegistry::load().unwrap();
+    let result = registry.repo_to_os("homebrew");
+    assert_eq!(result, Some(&OsType::Macos));
+}
+
+#[test]
+fn repo_to_os_maps_debian_versioned() {
+    let registry = PlatformRegistry::load().unwrap();
+    let result = registry.repo_to_os("debian_13");
+    assert_eq!(result, Some(&OsType::Debian));
+}
+
+#[test]
+fn repo_to_os_maps_ubuntu_versioned() {
+    let registry = PlatformRegistry::load().unwrap();
+    let result = registry.repo_to_os("ubuntu_24_04");
+    assert_eq!(result, Some(&OsType::Ubuntu));
+}
+
+#[test]
+fn repo_to_os_maps_linuxmint() {
+    let registry = PlatformRegistry::load().unwrap();
+    let result = registry.repo_to_os("linuxmint");
+    assert_eq!(result, Some(&OsType::Mint));
+}
+
+#[test]
+fn repo_to_os_maps_arch() {
+    let registry = PlatformRegistry::load().unwrap();
+    let result = registry.repo_to_os("arch");
+    assert_eq!(result, Some(&OsType::Arch));
+}
+
+#[test]
+fn repo_to_os_maps_manjaro_stable() {
+    let registry = PlatformRegistry::load().unwrap();
+    let result = registry.repo_to_os("manjaro_stable");
+    assert_eq!(result, Some(&OsType::Manjaro));
+}
+
+#[test]
+fn repo_to_os_maps_fedora_versioned() {
+    let registry = PlatformRegistry::load().unwrap();
+    let result = registry.repo_to_os("fedora_40");
+    assert_eq!(result, Some(&OsType::Fedora));
+}
+
+#[test]
+fn repo_to_os_maps_winget() {
+    let registry = PlatformRegistry::load().unwrap();
+    let result = registry.repo_to_os("winget");
+    assert_eq!(result, Some(&OsType::Windows));
+}
+
+#[test]
+fn repo_to_os_maps_chocolatey() {
+    let registry = PlatformRegistry::load().unwrap();
+    let result = registry.repo_to_os("chocolatey");
+    assert_eq!(result, Some(&OsType::Windows));
+}
+
+#[test]
+fn repo_to_os_maps_macports() {
+    let registry = PlatformRegistry::load().unwrap();
+    let result = registry.repo_to_os("macports");
+    assert_eq!(result, Some(&OsType::Macos));
+}
+
+#[test]
+fn repo_to_os_maps_scoop() {
+    let registry = PlatformRegistry::load().unwrap();
+    let result = registry.repo_to_os("scoop");
+    assert_eq!(result, Some(&OsType::Windows));
+}
+
+#[test]
+fn repo_to_os_unknown_repo_returns_none() {
+    let registry = PlatformRegistry::load().unwrap();
+    let result = registry.repo_to_os("freebsd");
+    assert_eq!(result, None);
 }

@@ -1,26 +1,15 @@
 # TODO
 
-## Resolver Pipeline
-
-- [x] Resolve package name (identity mapping stub)
-- [x] Build install command from YAML template
-- [x] Execute or dry-run
-- [x] Add tests for resolver
-
 ## Database Integration
 
-- [X] Add SQLite schema (rusqlite)
-- [X] Add seed DB loader (include_bytes! + ruzstd)
-- [X] Add DB lookup in resolver
 - [ ] Add DB update mechanism (GitHub Releases)
-- [X] Add tests for database
 
 ## Repology Integration (upi-net)
 
-- [ ] Implement Repology client (ureq + serde_json)
-- [ ] Stream deserialize project to package mapping
-- [ ] Integrate into resolver pipeline
-- [ ] Add tests for Repology
+- [X] Implement Repology client (ureq + serde_json)
+- [X] Stream deserialize project to package mapping
+- [X] Integrate into resolver pipeline
+- [X] Add tests for Repology
 
 ## Fallback Search using system package manager
 
