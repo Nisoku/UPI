@@ -44,3 +44,6 @@ Build/platform/schema.json
 
 artifacts/
 corpus/
+
+# Terminal recordings
+*.cast

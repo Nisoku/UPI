@@ -8,6 +8,10 @@ One command to install anything, anywhere:
 upi install [...]
 ```
 
+<p align="center">
+  <img src="docs/upi-demo.gif" width="720" alt="UPI demo">
+</p>
+
 UPI is a cross-OS macro installer. It translates a generic package name into the correct native install command for your system. It is not a package manager, rather a translator over existing package managers.
 
 ## Quick Start

@@ -1,7 +1,5 @@
 # TODO
 
-- [x] Add indicator while UPI is loading results
-
 ## Docs + CI
 
 - [ ] Add Docs/ with architecture and YAML schema (docmd, duh)

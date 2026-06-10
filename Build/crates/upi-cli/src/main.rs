@@ -8,7 +8,17 @@ use upi_core::{detect, OsType, PackageSource, PlatformRegistry, Resolver};
 use upi_net::RepologyClient;
 
 #[derive(Parser)]
-#[command(name = "upi", version, about = "Universal Package Installer")]
+#[command(
+    name = "upi",
+    version,
+    about = "Universal Package Installer",
+    before_help = "  ██╗   ██╗██████╗ ██╗
+  ██║   ██║██╔══██╗██║
+  ██║   ██║██████╔╝██║
+  ██║   ██║██╔═══╝ ██║
+  ╚██████╔╝██║     ██║
+   ╚═════╝ ╚═╝     ╚═╝"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
