@@ -1,0 +1,45 @@
+[package]
+name = "upi-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+noyalib = "0.0.7"
+serde_json = "1"
+upi-core = { path = "../Build/crates/upi-core" }
+upi-net = { path = "../Build/crates/upi-net" }
+
+[[bin]]
+name = "parse_yaml"
+path = "fuzz_targets/parse_yaml.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "repology_response"
+path = "fuzz_targets/repology_response.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "repology_search"
+path = "fuzz_targets/repology_search.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "parse_search_output"
+path = "fuzz_targets/parse_search_output.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "expand_env"
+path = "fuzz_targets/expand_env.rs"
+test = false
+doc = false

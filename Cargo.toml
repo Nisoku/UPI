@@ -7,6 +7,7 @@ members = [
   "Build/tests",
   "Build/tools/db-update",
 ]
+exclude = ["fuzz"]
 
 [workspace.package]
 version = "0.1.0"

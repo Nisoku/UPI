@@ -41,3 +41,6 @@ cache/
 
 # Build artefacts
 Build/platform/schema.json
+
+artifacts/
+corpus/

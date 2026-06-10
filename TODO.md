@@ -1,8 +1,6 @@
 # TODO
 
 - [ ] Add indicator while UPI is loading results
-- [ ] Language package managers? with an autodetect setup at the beginning that detects all managers you have installed
-- [X] Caching everywhere possible to ease the burden on Repology and servers and stuff
 
 ## Docs + CI
 
@@ -15,9 +13,13 @@
 
 ## Rust Tooling
 
-- [ ] fuzz testing for YAML parsing
+- [x] fuzz testing for YAML parsing
+
+## Demo
+
+- [ ] Maybe getting the core WASM compat for funsies hehe (web db and checker ooohhhhhhhh maybe that could be the web demo)
 
 ## Future
 
 - [ ] GUI for UPI (hehe)
-- [ ] Maybe getting the core WASM compat for funsies hehe (web db and checker ooohhhhhhhh maybe that could be the web demo)
+- [ ] Language package managers? with an autodetect setup at the beginning that detects all managers you have installed
