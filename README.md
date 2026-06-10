@@ -57,10 +57,7 @@ UPI/
 ## Regenerating the Seed DB
 
 ```sh
-# Edit Build/data/seed-data.sql with new mappings, then:
-cargo run -p db-build
-
-# Bump the version in Build/data/seed-version.txt if the schema changes.
+cargo run -p db-update
 ```
 
 ## License

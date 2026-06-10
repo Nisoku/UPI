@@ -187,17 +187,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "db-build"
-version = "0.1.0"
-dependencies = [
- "rusqlite",
- "ruzstd",
-]
-
-[[package]]
 name = "db-update"
 version = "0.1.0"
 dependencies = [
+ "dirs",
  "env_logger",
  "log",
  "rusqlite",

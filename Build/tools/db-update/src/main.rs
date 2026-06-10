@@ -84,7 +84,55 @@ fn pillar_defs(registry: &PlatformRegistry) -> HashMap<OsType, Vec<OsType>> {
     map
 }
 
+fn page_cache_dir() -> PathBuf {
+    let base = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    base.join(".upi").join("cache").join("repology-pages")
+}
+
+fn read_page_cache(cursor: &str) -> Option<String> {
+    let dir = page_cache_dir();
+    let path = dir.join(cursor_to_filename(cursor));
+    let meta = std::fs::metadata(&path).ok()?;
+
+    let modified = meta.modified().ok()?;
+    let age = SystemTime::now().duration_since(modified).ok()?;
+    if age > Duration::from_secs(CACHE_TTL_SECS) {
+        log::debug!("page cache expired for cursor '{cursor}' (age: {:?})", age);
+        return None;
+    }
+
+    log::info!("page cache hit for cursor '{cursor}'");
+    std::fs::read_to_string(&path).ok()
+}
+
+fn write_page_cache(cursor: &str, body: &str) {
+    let dir = page_cache_dir();
+    if std::fs::create_dir_all(&dir).is_err() {
+        return;
+    }
+    let path = dir.join(cursor_to_filename(cursor));
+    if std::fs::write(&path, body).is_err() {
+        log::warn!("failed to write page cache for cursor '{cursor}'");
+    }
+}
+
+fn cursor_to_filename(cursor: &str) -> String {
+    if cursor.is_empty() {
+        "first.json".into()
+    } else {
+        let enc: String = url::form_urlencoded::byte_serialize(cursor.as_bytes()).collect();
+        format!("{enc}.json")
+    }
+}
+
+const CACHE_TTL_SECS: u64 = 86400; // 24 hours
+
 fn fetch_page(client: &ureq::Agent, cursor: &str) -> Result<RepologyPage, String> {
+    // Check disk cache first
+    if let Some(body) = read_page_cache(cursor) {
+        return serde_json::from_str(&body).map_err(|e| format!("JSON parse: {e}"));
+    }
+
     let cursor_enc: String = url::form_urlencoded::byte_serialize(cursor.as_bytes()).collect();
     let url = if cursor.is_empty() {
         format!("{}/projects/?families=3-", REPOLOGY_BASE)
@@ -103,6 +151,8 @@ fn fetch_page(client: &ureq::Agent, cursor: &str) -> Result<RepologyPage, String
         .body_mut()
         .read_to_string()
         .map_err(|e| format!("body read: {e}"))?;
+
+    write_page_cache(cursor, &body);
 
     serde_json::from_str(&body).map_err(|e| format!("JSON parse: {e}"))
 }
@@ -209,7 +259,7 @@ fn inject_winget_mappings(conn: &Connection, items: &[WingetIndexItem]) -> Resul
     {
         let mut insert = tx
             .prepare(
-                "INSERT OR IGNORE INTO mappings (package_id, os, os_package, source, confidence)
+                "INSERT OR REPLACE INTO mappings (package_id, os, os_package, source, confidence)
                  VALUES (?1, ?2, ?3, 'winget_direct', ?4)",
             )
             .map_err(|e| format!("prepare insert mapping: {e}"))?;
@@ -286,7 +336,8 @@ fn main() {
         }
 
         page_count += 1;
-        let keys: Vec<&String> = page.keys().collect();
+        let mut keys: Vec<&String> = page.keys().collect();
+        keys.sort_unstable();
 
         for project_name in &keys {
             let packages = &page[project_name.as_str()];
