@@ -1,0 +1,60 @@
+{
+  "title": "UPI",
+  "description": "",
+  "pages": [
+    {
+      "title": "CLI Reference",
+      "url": "https://nisoku.org/UPI/cli/",
+      "description": "Full reference for the UPI command-line interface",
+      "priority": "medium"
+    },
+    {
+      "title": "Core Concepts",
+      "url": "https://nisoku.org/UPI/getting-started/concepts/",
+      "description": "How UPI works under the hood",
+      "priority": "medium"
+    },
+    {
+      "title": "Installation",
+      "url": "https://nisoku.org/UPI/getting-started/installation/",
+      "description": "Install UPI on any platform",
+      "priority": "medium"
+    },
+    {
+      "title": "Quick Start",
+      "url": "https://nisoku.org/UPI/getting-started/quickstart/",
+      "description": "Install your first package with UPI in 30 seconds",
+      "priority": "medium"
+    },
+    {
+      "title": "Supported Platforms",
+      "url": "https://nisoku.org/UPI/guide/platforms/",
+      "description": "OS families, package managers, and YAML configuration",
+      "priority": "medium"
+    },
+    {
+      "title": "Resolution Pipeline",
+      "url": "https://nisoku.org/UPI/guide/resolution/",
+      "description": "How UPI resolves a package name to an install command",
+      "priority": "medium"
+    },
+    {
+      "title": "UPI",
+      "url": "https://nisoku.org/UPI/",
+      "description": "Universal Package Installer - one command to install anything, anywhere",
+      "priority": "high"
+    },
+    {
+      "title": "Architecture",
+      "url": "https://nisoku.org/UPI/reference/architecture/",
+      "description": "Codebase structure and design principles",
+      "priority": "medium"
+    },
+    {
+      "title": "Database",
+      "url": "https://nisoku.org/UPI/reference/database/",
+      "description": "Seed database schema, generation, and update mechanism",
+      "priority": "medium"
+    }
+  ]
+}

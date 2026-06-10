@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "model": "Xenova/all-MiniLM-L6-v2",
+  "dimensions": 384,
+  "status": "complete",
+  "totalFiles": 9,
+  "indexedFiles": 9,
+  "totalChunks": 83,
+  "batchCount": 1,
+  "files": {
+    "cli/index.md": {
+      "mtime": 1781069334933.414,
+      "size": 2925,
+      "batches": []
+    },
+    "getting-started/concepts.md": {
+      "mtime": 1781069334933.414,
+      "size": 3268,
+      "batches": []
+    },
+    "getting-started/installation.md": {
+      "mtime": 1781069334933.555,
+      "size": 2358,
+      "batches": []
+    },
+    "getting-started/quickstart.md": {
+      "mtime": 1781069334933.555,
+      "size": 1643,
+      "batches": []
+    },
+    "guide/platforms.md": {
+      "mtime": 1781069334933.555,
+      "size": 2413,
+      "batches": []
+    },
+    "guide/resolution.md": {
+      "mtime": 1781069334933.701,
+      "size": 3217,
+      "batches": []
+    },
+    "index.md": {
+      "mtime": 1781069334933.701,
+      "size": 3696,
+      "batches": []
+    },
+    "reference/architecture.md": {
+      "mtime": 1781069334933.701,
+      "size": 3300,
+      "batches": []
+    },
+    "reference/database.md": {
+      "mtime": 1781069334933.902,
+      "size": 3207,
+      "batches": []
+    }
+  }
+}

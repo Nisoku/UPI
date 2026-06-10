@@ -1,0 +1,64 @@
+{
+  "tree": [
+    {
+      "title": "Cli",
+      "path": "cli",
+      "children": [
+        {
+          "title": "Index",
+          "path": "cli/index.md"
+        }
+      ]
+    },
+    {
+      "title": "Getting Started",
+      "path": "getting-started",
+      "children": [
+        {
+          "title": "Concepts",
+          "path": "getting-started/concepts.md"
+        },
+        {
+          "title": "Installation",
+          "path": "getting-started/installation.md"
+        },
+        {
+          "title": "Quickstart",
+          "path": "getting-started/quickstart.md"
+        }
+      ]
+    },
+    {
+      "title": "Guide",
+      "path": "guide",
+      "children": [
+        {
+          "title": "Platforms",
+          "path": "guide/platforms.md"
+        },
+        {
+          "title": "Resolution",
+          "path": "guide/resolution.md"
+        }
+      ]
+    },
+    {
+      "title": "Index",
+      "path": "index.md"
+    },
+    {
+      "title": "Reference",
+      "path": "reference",
+      "children": [
+        {
+          "title": "Architecture",
+          "path": "reference/architecture.md"
+        },
+        {
+          "title": "Database",
+          "path": "reference/database.md"
+        }
+      ]
+    }
+  ]
+}
