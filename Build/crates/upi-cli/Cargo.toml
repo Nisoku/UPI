@@ -3,14 +3,23 @@ name = "upi-cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme = "../../../README.md"
+include = [
+  "src/**/*",
+  "Cargo.toml",
+]
 
 [[bin]]
 name = "upi"
 path = "src/main.rs"
 
 [dependencies]
-upi-core = { path = "../upi-core" }
-upi-net = { path = "../upi-net" }
+upi-core = { path = "../upi-core", version = "0.1" }
+upi-net = { path = "../upi-net", version = "0.1" }
 clap = { version = "4", features = ["derive"] }
 indicatif = "0.18.4"
 log = "0.4"

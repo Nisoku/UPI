@@ -13,3 +13,7 @@ exclude = ["fuzz"]
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
+description = "UPI is a cross OS macro installer that lets you run one command to install a library or tool universally"
+documentation = "https://nisoku.org/UPI"
+homepage = "https://github.com/Nisoku/UPI"
+repository = "https://github.com/Nisoku/UPI"

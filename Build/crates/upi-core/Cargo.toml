@@ -3,6 +3,17 @@ name = "upi-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme = "../../../README.md"
+include = [
+  "src/**/*",
+  "Cargo.toml",
+  "data/**/*",
+  "platform/**/*",
+]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }

@@ -25,4 +25,7 @@ release:
 format: 
     cargo fmt
 
-all: check format clippy test
+manifest:
+    cargo publish --dry-run --allow-dirty -p upi-core
+
+all: check format clippy test manifest
