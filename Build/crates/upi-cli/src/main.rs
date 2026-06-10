@@ -1,8 +1,8 @@
-use std::io::Write;
+use std::io::{IsTerminal, Write};
 use std::time::Duration;
 
 use clap::{ArgAction, Parser, Subcommand};
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 use log::LevelFilter;
 use upi_core::{detect, OsType, PackageSource, PlatformRegistry, Resolver};
 use upi_net::RepologyClient;
@@ -94,8 +94,15 @@ fn build_sources(
     }
 }
 
+fn is_interactive() -> bool {
+    std::env::var("CI").is_err() && std::io::stderr().is_terminal()
+}
+
 fn spinner() -> ProgressBar {
     let pb = ProgressBar::new_spinner();
+    if !is_interactive() {
+        pb.set_draw_target(ProgressDrawTarget::hidden());
+    }
     pb.set_style(
         ProgressStyle::with_template("{spinner:.cyan} {msg}")
             .unwrap()
