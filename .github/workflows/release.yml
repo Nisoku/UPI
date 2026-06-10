@@ -53,15 +53,15 @@ jobs:
 
       - name: Stage binary
         run: |
-          mkdir -p "${{ runner.temp }}/upi-release"
+          mkdir -p staging/upi-release
           cp "target/${{ matrix.target }}/release/upi${{ matrix.suffix }}" \
-             "${{ runner.temp }}/upi-release/upi-${{ matrix.label }}${{ matrix.suffix }}"
+             "staging/upi-release/upi-${{ matrix.label }}${{ matrix.suffix }}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: upi-${{ matrix.label }}
-          path: ${{ runner.temp }}/upi-release/*
+          path: staging/upi-release/*
 
   release:
     needs: build
