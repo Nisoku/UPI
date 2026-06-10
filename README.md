@@ -1,8 +1,13 @@
 # UPI
 
+[![Docs](https://img.shields.io/badge/docs-nisoku.org%2FUPI-blue?style=flat)](https://nisoku.org/UPI)
+[![CI](https://github.com/Nisoku/UPI/actions/workflows/full.yml/badge.svg)](https://github.com/Nisoku/UPI/actions/workflows/full.yml)
+
 Universal Package Installer.
 
 One command to install anything, anywhere:
+
+> **Documentation:** [nisoku.org/UPI](https://nisoku.org/UPI)
 
 ```sh
 upi install [...]
