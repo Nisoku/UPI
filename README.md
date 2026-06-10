@@ -60,13 +60,13 @@ UPI/
   Build/
     crates/
       upi-core/                 # resolver, DB, OS detection, exec, YAML loader
+        data/                   # SQL schema, seed data, version
+        platform/               # YAML OS definitions (SSOT)
       upi-cli/                  # thin CLI wrapper (clap)
       upi-net/                  # network logic (ureq, isolated for WASM)
-    data/                       # SQL schema, seed data, build tool, version
-    platform/                   # YAML OS definitions (SSOT)
     tests/                      # all tests
     tools/
-      db-build/                 # Rust helper to generate seed.db.zst
+      db-update/                # seed DB auto-generator from Repology
   debug/
     GUIDE.md                    # architecture and conventions
 ```

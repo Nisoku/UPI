@@ -11,15 +11,17 @@ UPI/
   Build/
     crates/
       upi-core/                # resolver, DB, OS detection, YAML loader, exec
+        data/                  # SQL schema, seed DB, version
+        platform/              # YAML OS definitions (SSOT)
       upi-cli/                 # thin CLI wrapper (clap)
       upi-net/                 # network logic (ureq, isolated for WASM)
-    data/                      # SQL schema, seed DB, version
-    platform/                  # YAML OS definitions (SSOT)
     tests/                     # all integration tests
     tools/
       db-update/               # seed DB auto-generation from Repology
   Docs/                        # documentation site (docmd)
   fuzz/                        # fuzz targets
+  install.sh                   # curl | sh installer for Unix
+  install.ps1                  # iwr | iex installer for Windows
 ```
 
 ## Crate Responsibilities

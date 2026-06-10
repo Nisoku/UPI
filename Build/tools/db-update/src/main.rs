@@ -160,13 +160,13 @@ fn fetch_page(client: &ureq::Agent, cursor: &str) -> Result<RepologyPage, String
 fn db_path() -> PathBuf {
     let cargo_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     cargo_dir
-        .join("../../data/")
+        .join("../../crates/upi-core/data/")
         .canonicalize()
-        .expect("../../data/ must exist relative to CARGO_MANIFEST_DIR")
+        .expect("../../crates/upi-core/data/ must exist relative to CARGO_MANIFEST_DIR")
 }
 
 fn build_db_schema(conn: &Connection) -> Result<(), String> {
-    conn.execute_batch(include_str!("../../../data/schema.sql"))
+    conn.execute_batch(include_str!("../../../crates/upi-core/data/schema.sql"))
         .map_err(|e| format!("schema: {e}"))
 }
 

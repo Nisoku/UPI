@@ -5,8 +5,8 @@ use rusqlite::Connection;
 
 use crate::error::{Error, Result};
 
-const SEED_DB: &[u8] = include_bytes!("../../../data/seed.db.zst");
-const SEED_VERSION: &str = include_str!("../../../data/seed-version.txt");
+const SEED_DB: &[u8] = include_bytes!("../data/seed.db.zst");
+const SEED_VERSION: &str = include_str!("../data/seed-version.txt");
 const META_FILE: &str = "meta.json";
 const DB_FILE: &str = "seed.db";
 

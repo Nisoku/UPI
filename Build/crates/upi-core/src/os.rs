@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use crate::error::{Error, Result};
 
-static PLATFORM_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../platform");
+static PLATFORM_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/platform");
 
 /// YAML-defined configuration for a package manager on one or more OS targets.
 #[derive(Debug, Clone, Deserialize)]
