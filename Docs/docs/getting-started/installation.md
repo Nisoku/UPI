@@ -3,6 +3,39 @@ title: "Installation"
 description: "Install UPI on any platform"
 ---
 
+## Quick Install (Shell)
+
+**Unix (Linux / macOS):**
+
+```bash
+curl -sfL https://raw.githubusercontent.com/Nisoku/UPI/main/install.sh | sh
+```
+
+**Windows (PowerShell):**
+
+```powershell
+iwr https://raw.githubusercontent.com/Nisoku/UPI/main/install.ps1 | iex
+```
+
+Each script detects your OS and architecture, downloads the correct binary from the latest release, and installs it to `/usr/local/bin` (Unix) or `%USERPROFILE%\.local\bin` (Windows). No dependencies required.
+
+Override the version or destination with environment variables:
+
+Unix:
+
+```bash
+UPI_VERSION=v0.1.0 UPI_INSTALL_DIR=~/.local/bin \
+  curl -sfL https://raw.githubusercontent.com/Nisoku/UPI/main/install.sh | sh
+```
+
+Windows:
+
+```powershell
+$env:UPI_VERSION = "v0.1.0"
+$env:UPI_INSTALL_DIR = "$env:USERPROFILE\bin"
+iwr https://raw.githubusercontent.com/Nisoku/UPI/main/install.ps1 | iex
+```
+
 ## From Source (crates.io)
 
 ```bash

@@ -1,19 +1,11 @@
 # TODO
 
-## Docs + CI
-
-- [X] Add Docs/ with architecture and YAML schema (docmd, duh)
-- [X] Add contribution guide + miscellaneous other things we need
-
 ## Install Script
 
-- [ ] Write install.sh for cross platform installing without needing `cargo`
-
-## Demo
-
-- [ ] Maybe getting the core WASM compat for funsies hehe (web db and checker ooohhhhhhhh maybe that could be the web demo)
+- [X] Write install.sh for cross platform installing without needing `cargo`
 
 ## Future
 
+- [ ] Maybe getting the core WASM compat for funsies hehe (web db and checker ooohhhhhhhh maybe that could be the web demo)
 - [ ] GUI for UPI (hehe)
 - [ ] Language package managers? with an autodetect setup at the beginning that detects all managers you have installed

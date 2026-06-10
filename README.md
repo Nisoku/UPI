@@ -16,9 +16,22 @@ UPI is a cross-OS macro installer. It translates a generic package name into the
 
 ## Quick Start
 
+**Unix (Linux / macOS):**
+
+```sh
+curl -sfL https://raw.githubusercontent.com/Nisoku/UPI/main/install.sh | sh
+```
+
+**Windows (PowerShell):**
+
+```pwsh
+iwr https://raw.githubusercontent.com/Nisoku/UPI/main/install.ps1 | iex
+```
+
+**Via Cargo (any platform with Rust):**
+
 ```sh
 cargo install upi
-upi install [...]
 ```
 
 ## Supported Platforms
