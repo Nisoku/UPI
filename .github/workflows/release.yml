@@ -61,7 +61,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: upi-${{ matrix.label }}
-          path: staging/upi-release/upi-${{ matrix.label }}${{ matrix.suffix }}
+          path: ${{ github.workspace }}/staging/upi-release/upi-${{ matrix.label }}${{ matrix.suffix }}
 
   release:
     needs: build
