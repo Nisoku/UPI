@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] Add indicator while UPI is loading results
+- [x] Add indicator while UPI is loading results
 
 ## Docs + CI
 
@@ -10,10 +10,6 @@
 ## Install Script
 
 - [ ] Write install.sh for cross platform installing without needing `cargo`
-
-## Rust Tooling
-
-- [x] fuzz testing for YAML parsing
 
 ## Demo
 

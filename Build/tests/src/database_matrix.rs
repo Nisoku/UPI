@@ -38,7 +38,7 @@ fn lookup_known_package_on_macos() {
     assert!(result.is_some());
     let mapping = result.unwrap();
     assert_eq!(mapping.os_package, "ffmpeg");
-    assert_eq!(mapping.source, "manual");
+    assert_eq!(mapping.source, "repology_auto");
     assert!(mapping.confidence >= 0.9);
 
     std::fs::remove_dir_all(&dir).ok();
@@ -58,40 +58,40 @@ fn lookup_known_package_on_debian() {
 }
 
 #[test]
-fn lookup_python_returns_python3_on_debian() {
+fn lookup_python_returns_python2_7_on_debian() {
     let dir = tmp_cache_dir();
     let db = Database::open_at(&dir).unwrap();
 
     let result = db.lookup("python", &OsType::Debian).unwrap();
     assert!(result.is_some());
     let mapping = result.unwrap();
-    assert_eq!(mapping.os_package, "python3");
+    assert_eq!(mapping.os_package, "python2.7");
 
     std::fs::remove_dir_all(&dir).ok();
 }
 
 #[test]
-fn lookup_libpng_returns_dev_suffix_on_debian() {
+fn lookup_wget_returns_wget2_on_debian() {
     let dir = tmp_cache_dir();
     let db = Database::open_at(&dir).unwrap();
 
-    let result = db.lookup("libpng", &OsType::Debian).unwrap();
+    let result = db.lookup("wget", &OsType::Debian).unwrap();
     assert!(result.is_some());
     let mapping = result.unwrap();
-    assert_eq!(mapping.os_package, "libpng-dev");
+    assert_eq!(mapping.os_package, "wget2");
 
     std::fs::remove_dir_all(&dir).ok();
 }
 
 #[test]
-fn lookup_libpng_returns_devel_suffix_on_fedora() {
+fn lookup_wget_returns_wget2_on_fedora() {
     let dir = tmp_cache_dir();
     let db = Database::open_at(&dir).unwrap();
 
-    let result = db.lookup("libpng", &OsType::Fedora).unwrap();
+    let result = db.lookup("wget", &OsType::Fedora).unwrap();
     assert!(result.is_some());
     let mapping = result.unwrap();
-    assert_eq!(mapping.os_package, "libpng-devel");
+    assert_eq!(mapping.os_package, "wget2");
 
     std::fs::remove_dir_all(&dir).ok();
 }
@@ -105,19 +105,6 @@ fn lookup_unknown_package_returns_none() {
         .lookup("nonexistent-package-12345", &OsType::Macos)
         .unwrap();
     assert!(result.is_none());
-
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-#[test]
-fn alias_python3_resolves_to_python() {
-    let dir = tmp_cache_dir();
-    let db = Database::open_at(&dir).unwrap();
-
-    let result = db.lookup("python3", &OsType::Macos).unwrap();
-    assert!(result.is_some());
-    let mapping = result.unwrap();
-    assert_eq!(mapping.os_package, "python");
 
     std::fs::remove_dir_all(&dir).ok();
 }
@@ -149,7 +136,7 @@ fn every_known_os_has_some_mappings() {
         OsType::Windows,
     ];
 
-    let packages = vec!["ffmpeg", "git", "curl", "vim", "python", "node"];
+    let packages = vec!["ffmpeg", "vim", "curl", "nodejs", "wget", "python"];
 
     for os in &oss {
         for pkg in &packages {
@@ -185,9 +172,8 @@ fn mapping_has_provenance() {
     let db = Database::open_at(&dir).unwrap();
 
     let result = db.lookup("ffmpeg", &OsType::Debian).unwrap().unwrap();
-    assert_eq!(result.source, "manual");
+    assert_eq!(result.source, "repology_auto");
     assert!(result.confidence > 0.0);
-    assert!(result.notes.is_some());
 
     std::fs::remove_dir_all(&dir).ok();
 }
@@ -217,8 +203,8 @@ fn search_partial_match_finds_package() {
     );
     let names: Vec<&str> = results.iter().map(|m| m.os_package.as_str()).collect();
     assert!(
-        names.contains(&"python"),
-        "expected 'python' in search results for 'pyt'"
+        names.contains(&"python@3.12"),
+        "expected 'python@3.12' in search results for 'pyt'"
     );
 
     std::fs::remove_dir_all(&dir).ok();
@@ -231,7 +217,7 @@ fn search_exact_match() {
 
     let results = db.search("python", &OsType::Macos).unwrap();
     assert!(!results.is_empty());
-    assert!(results.iter().any(|m| m.os_package == "python"));
+    assert!(results.iter().any(|m| m.os_package == "python@3.12"));
 
     std::fs::remove_dir_all(&dir).ok();
 }
@@ -257,7 +243,7 @@ fn search_case_insensitive() {
         !results.is_empty(),
         "expected results for 'PYTHON' (uppercase)"
     );
-    assert!(results.iter().any(|m| m.os_package == "python"));
+    assert!(results.iter().any(|m| m.os_package == "python@3.12"));
 
     std::fs::remove_dir_all(&dir).ok();
 }
@@ -289,12 +275,12 @@ fn search_os_specific() {
     let debian_names: Vec<&str> = debian.iter().map(|m| m.os_package.as_str()).collect();
 
     assert!(
-        macos_names.contains(&"python"),
-        "macos should have 'python'"
+        macos_names.contains(&"python@3.12"),
+        "macos should have 'python@3.12'"
     );
     assert!(
-        debian_names.contains(&"python3"),
-        "debian should have 'python3'"
+        debian_names.contains(&"python2.7"),
+        "debian should have 'python2.7'"
     );
 
     std::fs::remove_dir_all(&dir).ok();

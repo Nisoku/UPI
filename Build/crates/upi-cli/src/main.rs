@@ -1,4 +1,8 @@
+use std::io::Write;
+use std::time::Duration;
+
 use clap::{ArgAction, Parser, Subcommand};
+use indicatif::{ProgressBar, ProgressStyle};
 use log::LevelFilter;
 use upi_core::{detect, OsType, PackageSource, PlatformRegistry, Resolver};
 use upi_net::RepologyClient;
@@ -66,6 +70,7 @@ fn init_logger(verbosity: u8) {
     env_logger::Builder::new()
         .filter_level(level)
         .parse_env("RUST_LOG")
+        .format(|buf, record| writeln!(buf, "{}", record.args()))
         .init();
 }
 
@@ -89,12 +94,35 @@ fn build_sources(
     }
 }
 
+fn spinner() -> ProgressBar {
+    let pb = ProgressBar::new_spinner();
+    pb.set_style(
+        ProgressStyle::with_template("{spinner:.cyan} {msg}")
+            .unwrap()
+            .tick_chars("◐◓◑◒"),
+    );
+    pb.enable_steady_tick(Duration::from_millis(100));
+    pb
+}
+
+fn finish_spinner(pb: ProgressBar, msg: String) {
+    pb.set_style(ProgressStyle::with_template("{msg}").unwrap());
+    pb.finish_with_message(msg);
+}
+
 fn run(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
+    let spinner = spinner();
+    spinner.set_message(format!("resolving {package}"));
     let registry = PlatformRegistry::global();
+
     let os_type = resolve_os(registry, &cli.os);
     let sources = build_sources(registry, cli.offline)?;
     let resolver = Resolver::with_registry_and_sources(registry.clone(), sources)?;
+
     let cmd = resolver.resolve_for_os(package, &os_type)?;
+
+    let msg = format!("✔ resolved {package}");
+    finish_spinner(spinner, msg);
 
     if cli.dry_run {
         println!("{}", cmd.to_display());
@@ -106,7 +134,10 @@ fn run(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
 }
 
 fn run_search(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
+    let spinner = spinner();
+    spinner.set_message(format!("searching for {package}"));
     let registry = PlatformRegistry::global();
+
     let os_type = resolve_os(registry, &cli.os);
     let sources = build_sources(registry, cli.offline)?;
 
@@ -117,6 +148,9 @@ fn run_search(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
 
     let resolver = Resolver::with_registry_and_sources(registry.clone(), sources)?;
     let candidates = resolver.search_candidates(package, &os_type)?;
+
+    let msg = format!("✔ searched for {package}");
+    finish_spinner(spinner, msg);
 
     println!(" OS:       {os_type:?}");
     println!(" Manager:  {}", manager.as_deref().unwrap_or("?"));
