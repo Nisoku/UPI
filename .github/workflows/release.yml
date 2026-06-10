@@ -52,16 +52,16 @@ jobs:
         run: cargo build --release --target ${{ matrix.target }} -p upi-cli
 
       - name: Stage binary
+        shell: bash
         run: |
-          mkdir -p staging/upi-release
           cp "target/${{ matrix.target }}/release/upi${{ matrix.suffix }}" \
-             "staging/upi-release/upi-${{ matrix.label }}${{ matrix.suffix }}"
+             "upi-${{ matrix.label }}${{ matrix.suffix }}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
           name: upi-${{ matrix.label }}
-          path: staging/upi-release/upi-${{ matrix.label }}${{ matrix.suffix }}
+          path: upi-${{ matrix.label }}${{ matrix.suffix }}
           if-no-files-found: error
 
   release:
