@@ -47,3 +47,6 @@ corpus/
 
 # Terminal recordings
 *.cast
+
+Docs/site
+Docs/node_modules/

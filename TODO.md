@@ -2,8 +2,8 @@
 
 ## Docs + CI
 
-- [ ] Add Docs/ with architecture and YAML schema (docmd, duh)
-- [ ] Add contribution guide + miscellaneous other things we need
+- [X] Add Docs/ with architecture and YAML schema (docmd, duh)
+- [X] Add contribution guide + miscellaneous other things we need
 
 ## Install Script
 
