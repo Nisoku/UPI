@@ -606,7 +606,7 @@ Universal Package Installer. One command to install anything, anywhere.
 ::: tag "Offline First"
 
 ::: button "Quick Start" ./getting-started/quickstart.md icon:play
-::: button "GitHub" external:<https://github.com/Nisoku/UPI> icon:github
+::: button "GitHub" external:https://github.com/Nisoku/UPI icon:github
 
 == side
 
