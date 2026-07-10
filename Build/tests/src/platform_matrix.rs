@@ -350,7 +350,9 @@ fn resolver_prefers_available_windows_manager() {
     };
 
     let registry = PlatformRegistry::from_configs(vec![unavailable, available]);
-    let resolver = Resolver::with_registry_and_sources(registry, vec![]).unwrap();
+    let resolver = Resolver::with_registry_and_sources(registry, vec![])
+        .unwrap()
+        .allow_identity(true);
     let commands = resolver
         .resolve_commands_for_os("steam", &OsType::Windows)
         .unwrap();
@@ -374,4 +376,155 @@ fn missing_program_is_reported_explicitly() {
         }
         other => panic!("expected ProgramNotFound, got {other:?}"),
     }
+}
+
+#[test]
+fn identity_disabled_by_default() {
+    let registry = PlatformRegistry::load().unwrap();
+    let resolver = Resolver::with_registry_and_sources(registry, vec![]).unwrap();
+    let os_type = detect();
+
+    let err = resolver
+        .resolve_commands_for_os("zzz_nonexistent_zzz", &os_type)
+        .unwrap_err();
+    match err {
+        upi_core::Error::Resolve(msg) => {
+            assert!(
+                msg.contains("no confident match"),
+                "expected 'no confident match' in error, got: {msg}"
+            );
+            assert!(
+                msg.contains("--allow-identity"),
+                "expected '--allow-identity' hint in error, got: {msg}"
+            );
+        }
+        other => panic!("expected Resolve error, got {other:?}"),
+    }
+}
+
+#[test]
+fn identity_allowed_with_flag() {
+    let registry = PlatformRegistry::load().unwrap();
+    let resolver = Resolver::with_registry_and_sources(registry, vec![])
+        .unwrap()
+        .allow_identity(true);
+    let os_type = detect();
+
+    let commands = resolver
+        .resolve_commands_for_os("zzz_nonexistent_zzz", &os_type)
+        .unwrap();
+    assert!(
+        !commands.is_empty(),
+        "expected at least one command when identity is allowed"
+    );
+}
+
+#[test]
+fn did_you_mean_suggestions_for_typo() {
+    let registry = PlatformRegistry::load().unwrap();
+    let resolver = Resolver::with_registry_and_sources(registry, vec![]).unwrap();
+    let os_type = detect();
+
+    let err = resolver
+        .resolve_commands_for_os("ripgrepp", &os_type)
+        .unwrap_err();
+    match err {
+        upi_core::Error::Resolve(msg) => {
+            assert!(
+                msg.contains("Did you mean"),
+                "expected 'Did you mean' in error, got: {msg}"
+            );
+        }
+        other => panic!("expected Resolve error, got {other:?}"),
+    }
+}
+
+#[test]
+fn short_query_skips_fuzzy_fallback() {
+    let registry = PlatformRegistry::load().unwrap();
+    let resolver = Resolver::with_registry_and_sources(registry, vec![]).unwrap();
+    let os_type = detect();
+
+    let err = resolver
+        .resolve_commands_for_os("rgz", &os_type)
+        .unwrap_err();
+    match err {
+        upi_core::Error::Resolve(msg) => {
+            assert!(
+                msg.contains("no confident match"),
+                "expected 'no confident match' for short query, got: {msg}"
+            );
+        }
+        other => panic!("expected Resolve error, got {other:?}"),
+    }
+}
+
+#[test]
+fn alias_rg_resolves_to_ripgrep() {
+    let resolver = Resolver::new().unwrap();
+    let os_type = detect();
+
+    let commands = resolver.resolve_commands_for_os("rg", &os_type).unwrap();
+    assert!(!commands.is_empty());
+    let display = commands.first().unwrap().to_display();
+    assert!(
+        display.contains("ripgrep"),
+        "expected 'ripgrep' in command, got: {display}"
+    );
+}
+
+#[test]
+fn alias_py_resolves_to_python() {
+    let resolver = Resolver::new().unwrap();
+    let os_type = detect();
+
+    let commands = resolver.resolve_commands_for_os("py", &os_type).unwrap();
+    assert!(!commands.is_empty());
+    let display = commands.first().unwrap().to_display();
+    assert!(
+        display.contains("python"),
+        "expected 'python' in command, got: {display}"
+    );
+}
+
+#[test]
+fn alias_nvim_resolves_to_neovim() {
+    let resolver = Resolver::new().unwrap();
+    let os_type = detect();
+
+    let commands = resolver.resolve_commands_for_os("nvim", &os_type).unwrap();
+    assert!(!commands.is_empty());
+    let display = commands.first().unwrap().to_display();
+    assert!(
+        display.contains("neovim"),
+        "expected 'neovim' in command, got: {display}"
+    );
+}
+
+#[test]
+fn alias_ff_resolves_to_ffmpeg() {
+    let resolver = Resolver::new().unwrap();
+    let os_type = detect();
+
+    let commands = resolver.resolve_commands_for_os("ff", &os_type).unwrap();
+    assert!(!commands.is_empty());
+    let display = commands.first().unwrap().to_display();
+    assert!(
+        display.contains("ffmpeg"),
+        "expected 'ffmpeg' in command, got: {display}"
+    );
+}
+
+#[test]
+fn alias_node_resolves_to_nodejs() {
+    let resolver = Resolver::new().unwrap();
+    let os_type = detect();
+
+    let commands = resolver.resolve_commands_for_os("node", &os_type).unwrap();
+    assert!(!commands.is_empty());
+    let display = commands.first().unwrap().to_display();
+    assert!(
+        display.contains("nodejs") || display.contains("node"),
+        "expected 'nodejs' or 'node' in command, got: {display}"
+    );
 }

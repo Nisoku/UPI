@@ -37,6 +37,13 @@ struct Cli {
     os: Option<String>,
 
     #[arg(
+        long,
+        global = true,
+        help = "Allow installing the raw query as-is when no confident match is found"
+    )]
+    allow_identity: bool,
+
+    #[arg(
         short,
         long,
         global = true,
@@ -134,7 +141,8 @@ fn run(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
 
     let os_type = resolve_os(registry, &cli.os);
     let sources = build_sources(registry, cli.offline)?;
-    let resolver = Resolver::with_registry_and_sources(registry.clone(), sources)?;
+    let resolver = Resolver::with_registry_and_sources(registry.clone(), sources)?
+        .allow_identity(cli.allow_identity);
 
     let commands = resolver.resolve_commands_for_os(package, &os_type)?;
 

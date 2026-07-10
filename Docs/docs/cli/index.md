@@ -11,14 +11,15 @@ upi [OPTIONS] <COMMAND>
 
 ## Global Options
 
-| Option              | Description                                               |
-|---------------------|-----------------------------------------------------------|
-| `--dry-run`         | Show the install command without executing it             |
-| `--offline`         | Skip network lookups; use only the local database         |
-| `--os <OS>`         | Override the target OS, like `macos`, `debian`, or `arch` |
-| `-v`, `-vv`, `-vvv` | Increase verbosity (info, debug, trace)                   |
-| `-h`, `--help`      | Print help information                                    |
-| `-V`, `--version`   | Print version information                                 |
+| Option                | Description                                                                   |
+|-----------------------|-------------------------------------------------------------------------------|
+| `--dry-run`           | Show the install command without executing it                                 |
+| `--offline`           | Skip network lookups; use only the local database                             |
+| `--allow-identity`    | Allow installing the raw query as-is when no confident match is found         |
+| `--os <OS>`           | Override the target OS, like `macos`, `debian`, or `arch`                     |
+| `-v`, `-vv`, `-vvv`   | Increase verbosity (info, debug, trace)                                       |
+| `-h`, `--help`        | Print help information                                                        |
+| `-V`, `--version`     | Print version information                                                     |
 
 ## Commands
 

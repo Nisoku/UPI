@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use strsim::{jaro_winkler, normalized_levenshtein};
 
 use crate::db::Database;
 use crate::error::{Error, Result};
@@ -29,19 +30,41 @@ pub struct ResolveCandidate {
     pub source: String,
 }
 
+/// The result of a resolution attempt, including optional suggestions for low-confidence cases.
+#[derive(Debug)]
+pub struct ResolveResult {
+    /// The resolved OS package name.
+    pub package: String,
+    /// Where the resolution came from.
+    pub source: String,
+    /// If the match was low-confidence, ranked suggestions to show the user.
+    pub suggestions: Vec<String>,
+}
+
 /// Orchestrates package resolution across multiple sources: Repology, database, fallback, identity.
 ///
 /// Tries network sources first, then local database, fallback search, and finally identity pass-through.
+/// Identity is **disabled by default**, use `allow_identity(true)` or pass `--allow-identity` to enable.
 pub struct Resolver {
     registry: PlatformRegistry,
     db: Database,
     sources: Vec<Box<dyn PackageSource>>,
+    allow_identity: bool,
 }
+
+const MAX_SUGGESTIONS: usize = 3;
+
+/// Minimum suggestion score for a candidate to be presented as a "did you mean" option.
+const SUGGESTION_THRESHOLD: f64 = 220.0;
+
+/// Short queries (<= this length) require exact or alias match only and no fuzzy fallback.
+const SHORT_QUERY_LIMIT: usize = 3;
 
 impl Resolver {
     /// Create a resolver with default settings and an empty source list.
     ///
     /// Uses the global `PlatformRegistry` and the default database path.
+    /// Identity is **disabled** by default, call `.allow_identity(true)` to enable.
     pub fn new() -> Result<Self> {
         let registry = PlatformRegistry::global().clone();
         let db = Database::open()?;
@@ -49,6 +72,7 @@ impl Resolver {
             registry,
             db,
             sources: Vec::new(),
+            allow_identity: false,
         })
     }
 
@@ -69,7 +93,17 @@ impl Resolver {
             registry,
             db,
             sources,
+            allow_identity: false,
         })
+    }
+
+    /// Enable or disable identity fallback.
+    ///
+    /// When enabled, if no other source matches, the raw query is used as the package name.
+    /// When disabled (default), unresolved queries produce an error with suggestions.
+    pub fn allow_identity(mut self, allow: bool) -> Self {
+        self.allow_identity = allow;
+        self
     }
 
     /// Resolve a package name to an install command for the detected OS.
@@ -81,7 +115,8 @@ impl Resolver {
 
     /// Resolve a package name to an install command for a specific OS.
     pub fn resolve_for_os(&self, package: &str, os_type: &os_info::Type) -> Result<Command> {
-        let commands = self.resolve_commands_for_os(package, os_type)?;
+        let commands =
+            self.resolve_commands_for_os_with_options(package, os_type, self.allow_identity)?;
         commands
             .into_iter()
             .next()
@@ -96,13 +131,25 @@ impl Resolver {
         package: &str,
         os_type: &os_info::Type,
     ) -> Result<Vec<Command>> {
+        self.resolve_commands_for_os_with_options(package, os_type, self.allow_identity)
+    }
+
+    /// Resolve a package name with an explicit identity fallback policy.
+    ///
+    /// When `allow_identity` is false and no confident match is found, returns an error with suggestions.
+    pub fn resolve_commands_for_os_with_options(
+        &self,
+        package: &str,
+        os_type: &os_info::Type,
+        allow_identity: bool,
+    ) -> Result<Vec<Command>> {
         let config = self
             .registry
             .for_type(os_type)
             .ok_or_else(|| Error::UnsupportedOs(format!("{os_type:?}")))?;
 
         log::debug!("using config: {} (sudo={})", config.manager, config.sudo);
-        let (os_package, _source) = self.lookup_package_name(package, os_type)?;
+        let (os_package, _source) = self.lookup_package_name(package, os_type, allow_identity)?;
         log::info!("resolved '{}' -> '{}'", package, os_package);
 
         let mut configs = self.registry.configs_for_type(os_type);
@@ -125,7 +172,8 @@ impl Resolver {
             .for_type(os_type)
             .ok_or_else(|| Error::UnsupportedOs(format!("{os_type:?}")))?;
 
-        let (os_package, source) = self.lookup_package_name(package, os_type)?;
+        let (os_package, source) =
+            self.lookup_package_name(package, os_type, self.allow_identity)?;
         let cmd = Command::from_config(config, &os_package);
 
         Ok((cmd, os_package, source, config.manager.clone()))
@@ -226,7 +274,13 @@ impl Resolver {
         &self,
         package: &str,
         os_type: &os_info::Type,
+        allow_identity: bool,
     ) -> Result<(String, String)> {
+        if let Some(alias) = resolve_alias(package) {
+            log::debug!("alias: '{}' -> '{}'", package, alias);
+            return Ok((alias.to_string(), "alias".into()));
+        }
+
         for (i, source) in self.sources.iter().enumerate() {
             log::debug!("source[{i}]: trying to resolve '{package}'");
             if let Some(name) = source.resolve_package(package, os_type)? {
@@ -246,19 +300,211 @@ impl Resolver {
             return Ok((mapping.os_package, source));
         }
 
-        log::debug!("fallback: searching for '{package}'");
-        let mut configs = self.registry.configs_for_type(os_type);
-        configs.sort_by_key(|config| !config.is_available());
-        for config in configs {
-            if let Some(searcher) = FallbackSearcher::from_config(config) {
-                if let Some(name) = searcher.search(package)? {
-                    log::debug!("fallback: found '{name}'");
-                    return Ok((name, format!("fallback search ({})", config.manager)));
+        // Short queries (<=3 chars) require exact or alias match only and no fuzzy fallback.
+        if package.len() <= SHORT_QUERY_LIMIT {
+            log::debug!(
+                "short query '{package}' (len={}): skipping fuzzy fallback",
+                package.len()
+            );
+        } else {
+            log::debug!("fallback: searching for '{package}'");
+            let mut configs = self.registry.configs_for_type(os_type);
+            configs.sort_by_key(|config| !config.is_available());
+            for config in configs {
+                if let Some(searcher) = FallbackSearcher::from_config(config) {
+                    if let Some(name) = searcher.search(package)? {
+                        log::debug!("fallback: found '{name}'");
+                        return Ok((name, format!("fallback search ({})", config.manager)));
+                    }
                 }
             }
         }
 
-        log::debug!("identity: using '{package}' as-is");
-        Ok((package.to_string(), "identity".into()))
+        if allow_identity {
+            log::debug!("identity: using '{package}' as-is");
+            return Ok((package.to_string(), "identity".into()));
+        }
+
+        let suggestions = self.best_suggestions(package, os_type)?;
+        if suggestions.is_empty() {
+            Err(Error::Resolve(format!(
+                "no confident match for '{package}'. Re-run with --allow-identity to install the exact input"
+            )))
+        } else {
+            let suggested = suggestions.join(", ");
+            Err(Error::Resolve(format!(
+                "no confident match for '{package}'. Did you mean: {suggested}? Re-run with --allow-identity to install the exact input"
+            )))
+        }
     }
+
+    fn best_suggestions(&self, query: &str, os_type: &os_info::Type) -> Result<Vec<String>> {
+        let candidates = self.search_candidates(query, os_type)?;
+
+        let mut ranked: Vec<(f64, String)> = candidates
+            .into_iter()
+            .filter(|c| c.source != "identity")
+            .map(|c| (suggestion_score(query, &c.name), c.name))
+            .collect();
+
+        // When search results are sparse, also score against well-known package names
+        // so typos like "ripgrepp" still get "ripgrep" as a suggestion.
+        if ranked.iter().all(|(s, _)| *s < SUGGESTION_THRESHOLD) {
+            for &name in KNOWN_PACKAGES {
+                let score = suggestion_score(query, name);
+                if score >= SUGGESTION_THRESHOLD {
+                    ranked.push((score, name.to_string()));
+                }
+            }
+        }
+
+        ranked.sort_by(|a, b| b.0.total_cmp(&a.0));
+        ranked.retain(|(score, _)| *score >= SUGGESTION_THRESHOLD);
+
+        let mut seen = HashSet::new();
+        let mut out = Vec::new();
+        for (_score, name) in ranked {
+            if seen.insert(name.clone()) {
+                out.push(name);
+            }
+            if out.len() >= MAX_SUGGESTIONS {
+                break;
+            }
+        }
+
+        Ok(out)
+    }
+}
+
+/// Well-known package names used for suggestion scoring when search results are sparse.
+const KNOWN_PACKAGES: &[&str] = &[
+    "ripgrep",
+    "python",
+    "python3",
+    "nodejs",
+    "nodejs-lts",
+    "neovim",
+    "vim",
+    "ffmpeg",
+    "yt-dlp",
+    "git",
+    "curl",
+    "wget",
+    "htop",
+    "bat",
+    "fd",
+    "fzf",
+    "jq",
+    "yq",
+    "exa",
+    "lsd",
+    "delta",
+    "ag",
+    "ghostscript",
+    "tree",
+    "tmux",
+    "ripgrep",
+    "nano",
+    "gcc",
+    "make",
+    "cmake",
+    "rust",
+    "go",
+    "deno",
+    "bun",
+    "docker",
+    "podman",
+    "gh",
+    "jq",
+    "zig",
+    "ruby",
+    "perl",
+    "lua",
+    "php",
+    "swift",
+    "rustup",
+    "cargo",
+    "gradle",
+    "maven",
+    "ansible",
+    "terraform",
+    "kubectl",
+    "helm",
+    "lazygit",
+    "lazydocker",
+    "bottom",
+    "tokei",
+    "hyperfine",
+    "bandwhich",
+    "difftastic",
+    "grex",
+    "sd",
+    "procs",
+    "duf",
+    "dust",
+    "navi",
+    "zoxide",
+    "starship",
+    "alacritty",
+    "kitty",
+    "wezterm",
+    "ranger",
+    "nnn",
+    "lf",
+    "broot",
+    "fish",
+    "zsh",
+    "bash",
+    "nushell",
+    "elvish",
+];
+
+fn resolve_alias(package: &str) -> Option<&'static str> {
+    match package.to_ascii_lowercase().as_str() {
+        "rg" => Some("ripgrep"),
+        "py" => Some("python"),
+        "python3" => Some("python"),
+        "node" => Some("nodejs"),
+        "nodejs-lts" => Some("nodejs-lts"),
+        "yt" => Some("yt-dlp"),
+        "vim" => Some("vim"),
+        "nvim" => Some("neovim"),
+        "gs" => Some("ghostscript"),
+        "ff" => Some("ffmpeg"),
+        "grep" => Some("ripgrep"),
+        "ag" => Some("the_silver_searcher"),
+        "fd" => Some("fd-find"),
+        "bat" => Some("bat"),
+        "exa" => Some("exa"),
+        "lsd" => Some("lsd"),
+        "delta" => Some("delta"),
+        "jq" => Some("jq"),
+        "yq" => Some("yq"),
+        "fzf" => Some("fzf"),
+        "ripgrep" => Some("ripgrep"),
+        "neovim" => Some("neovim"),
+        "ffmpeg" => Some("ffmpeg"),
+        "yt-dlp" => Some("yt-dlp"),
+        _ => None,
+    }
+}
+
+fn suggestion_score(query: &str, candidate: &str) -> f64 {
+    let q = query.to_ascii_lowercase();
+    let c = candidate.to_ascii_lowercase();
+    if q == c {
+        return 1000.0;
+    }
+
+    let mut score = 0.0;
+    if c.starts_with(&q) {
+        score += 220.0;
+    }
+    if c.contains(&q) {
+        score += 90.0;
+    }
+    score += jaro_winkler(&q, &c) * 220.0;
+    score += normalized_levenshtein(&q, &c) * 220.0;
+    let len_gap = (q.len() as i64 - c.len() as i64).abs() as f64;
+    score - (len_gap * 8.0)
 }
