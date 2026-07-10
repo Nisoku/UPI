@@ -23,10 +23,23 @@ impl FallbackSearcher {
         let cmd_str = self.search_template.replace("{query}", query);
         log::debug!("fallback: running {cmd_str}");
 
-        let output = std::process::Command::new("sh")
-            .arg("-c")
+        let (shell, flag) = if cfg!(windows) {
+            ("cmd", "/C")
+        } else {
+            ("sh", "-c")
+        };
+
+        let output = std::process::Command::new(shell)
+            .arg(flag)
             .arg(&cmd_str)
-            .output()?;
+            .output()
+            .map_err(|e| {
+                if e.kind() == std::io::ErrorKind::NotFound {
+                    crate::error::Error::ProgramNotFound(shell.into())
+                } else {
+                    crate::error::Error::from(e)
+                }
+            })?;
 
         if !output.status.success() {
             log::debug!("fallback: non-zero exit ({:?})", output.status.code());

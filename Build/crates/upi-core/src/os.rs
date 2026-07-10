@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::sync::OnceLock;
 
 use include_dir::{include_dir, Dir};
@@ -40,6 +41,13 @@ impl PlatformConfig {
     pub fn expanded_binary_paths(&self) -> Vec<String> {
         self.binary_paths.iter().map(|p| expand_env(p)).collect()
     }
+
+    /// Return whether at least one configured binary path currently exists.
+    pub fn is_available(&self) -> bool {
+        self.expanded_binary_paths()
+            .iter()
+            .any(|path| Path::new(path).exists())
+    }
 }
 
 impl PlatformRegistry {
@@ -79,11 +87,24 @@ impl PlatformRegistry {
         Ok(Self { configs })
     }
 
+    /// Create a registry from an explicit config list.
+    pub fn from_configs(configs: Vec<PlatformConfig>) -> Self {
+        Self { configs }
+    }
+
     /// Find the platform config for a given OS type.
     ///
     /// Returns `None` for unsupported OS types that have no matching YAML definition.
     pub fn for_type(&self, os_type: &os_info::Type) -> Option<&PlatformConfig> {
         self.configs.iter().find(|c| c.targets.contains(os_type))
+    }
+
+    /// Return all configs that match the given OS type, in load order.
+    pub fn configs_for_type(&self, os_type: &os_info::Type) -> Vec<&PlatformConfig> {
+        self.configs
+            .iter()
+            .filter(|config| config.targets.contains(os_type))
+            .collect()
     }
 
     /// All platform configs loaded from YAML.

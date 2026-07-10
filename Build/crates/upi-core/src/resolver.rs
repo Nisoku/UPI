@@ -81,6 +81,21 @@ impl Resolver {
 
     /// Resolve a package name to an install command for a specific OS.
     pub fn resolve_for_os(&self, package: &str, os_type: &os_info::Type) -> Result<Command> {
+        let commands = self.resolve_commands_for_os(package, os_type)?;
+        commands
+            .into_iter()
+            .next()
+            .ok_or_else(|| Error::Resolve(format!("no install command available for {os_type:?}")))
+    }
+
+    /// Resolve a package name to all matching install commands for a specific OS.
+    ///
+    /// Available managers are ordered first so callers can try them before falling back.
+    pub fn resolve_commands_for_os(
+        &self,
+        package: &str,
+        os_type: &os_info::Type,
+    ) -> Result<Vec<Command>> {
         let config = self
             .registry
             .for_type(os_type)
@@ -90,7 +105,13 @@ impl Resolver {
         let (os_package, _source) = self.lookup_package_name(package, os_type)?;
         log::info!("resolved '{}' -> '{}'", package, os_package);
 
-        Ok(Command::from_config(config, &os_package))
+        let mut configs = self.registry.configs_for_type(os_type);
+        configs.sort_by_key(|config| !config.is_available());
+
+        Ok(configs
+            .into_iter()
+            .map(|config| Command::from_config(config, &os_package))
+            .collect())
     }
 
     /// Resolve with full provenance: returns `(command, os_package, source_label, manager_name)`.
@@ -176,13 +197,15 @@ impl Resolver {
             }
         }
 
-        if let Some(config) = self.registry.for_type(os_type) {
+        let mut configs = self.registry.configs_for_type(os_type);
+        configs.sort_by_key(|config| !config.is_available());
+        for config in configs {
             if let Some(searcher) = FallbackSearcher::from_config(config) {
                 if let Some(name) = searcher.search(query)? {
                     if seen.insert(name.clone()) {
                         candidates.push(ResolveCandidate {
                             name,
-                            source: "fallback search".into(),
+                            source: format!("fallback search ({})", config.manager),
                         });
                     }
                 }
@@ -224,11 +247,13 @@ impl Resolver {
         }
 
         log::debug!("fallback: searching for '{package}'");
-        if let Some(config) = self.registry.for_type(os_type) {
+        let mut configs = self.registry.configs_for_type(os_type);
+        configs.sort_by_key(|config| !config.is_available());
+        for config in configs {
             if let Some(searcher) = FallbackSearcher::from_config(config) {
                 if let Some(name) = searcher.search(package)? {
                     log::debug!("fallback: found '{name}'");
-                    return Ok((name, "fallback search".into()));
+                    return Ok((name, format!("fallback search ({})", config.manager)));
                 }
             }
         }

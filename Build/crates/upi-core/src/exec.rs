@@ -1,5 +1,6 @@
 use crate::error::Result;
 use crate::os::PlatformConfig;
+use std::io::ErrorKind;
 
 /// A platform install command with template substitution and sudo wrapping.
 #[derive(Debug)]
@@ -52,7 +53,13 @@ impl Command {
         let status = std::process::Command::new(&self.program)
             .args(&self.args)
             .status()
-            .map_err(|e| crate::error::Error::Exec(format!("failed to execute: {e}")))?;
+            .map_err(|e| {
+                if e.kind() == ErrorKind::NotFound {
+                    crate::error::Error::ProgramNotFound(self.program.clone())
+                } else {
+                    crate::error::Error::Exec(format!("failed to execute: {e}"))
+                }
+            })?;
 
         if !status.success() {
             return Err(crate::error::Error::Exec(format!(

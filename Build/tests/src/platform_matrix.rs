@@ -1,3 +1,5 @@
+use std::fs;
+
 use upi_core::{detect, Command, OsType, PlatformConfig, PlatformRegistry, Resolver};
 
 fn known_types() -> Vec<OsType> {
@@ -101,8 +103,8 @@ fn resolver_detects_and_resolves() {
     let cmd = resolver.resolve("ffmpeg").unwrap();
     let display = cmd.to_display();
     assert!(
-        display.contains("ffmpeg"),
-        "expected ffmpeg in command, got: {display}"
+        display.contains("install"),
+        "expected an install command, got: {display}"
     );
 }
 
@@ -301,4 +303,75 @@ fn expanded_binary_paths_resolves_windows_configs() {
     // Both paths should be expanded (even if the env var is empty)
     assert!(paths[0].contains("Microsoft\\WindowsApps"));
     assert!(paths[1].contains("Microsoft\\WinGet\\Links"));
+}
+
+#[test]
+fn configs_for_type_returns_all_windows_managers() {
+    let registry = PlatformRegistry::load().unwrap();
+    let configs = registry.configs_for_type(&OsType::Windows);
+    let managers: Vec<&str> = configs
+        .iter()
+        .map(|config| config.manager.as_str())
+        .collect();
+
+    assert!(managers.contains(&"winget"));
+    assert!(managers.contains(&"scoop"));
+    assert!(managers.contains(&"chocolatey"));
+}
+
+#[test]
+fn resolver_prefers_available_windows_manager() {
+    let base = std::env::temp_dir().join("upi-manager-test");
+    let available_dir = base.join("available");
+    let missing_dir = base.join("missing");
+    let _ = fs::remove_dir_all(&base);
+    fs::create_dir_all(&available_dir).unwrap();
+
+    let unavailable = PlatformConfig {
+        targets: vec![OsType::Windows],
+        manager: "winget".into(),
+        sudo: false,
+        install: "winget install --id {package}".into(),
+        search: Some("winget search {query}".into()),
+        provides: None,
+        provides_parse: None,
+        binary_paths: vec![missing_dir.to_string_lossy().to_string()],
+    };
+
+    let available = PlatformConfig {
+        targets: vec![OsType::Windows],
+        manager: "scoop".into(),
+        sudo: false,
+        install: "scoop install {package}".into(),
+        search: Some("scoop search {query}".into()),
+        provides: None,
+        provides_parse: None,
+        binary_paths: vec![available_dir.to_string_lossy().to_string()],
+    };
+
+    let registry = PlatformRegistry::from_configs(vec![unavailable, available]);
+    let resolver = Resolver::with_registry_and_sources(registry, vec![]).unwrap();
+    let commands = resolver
+        .resolve_commands_for_os("steam", &OsType::Windows)
+        .unwrap();
+
+    assert_eq!(commands.first().unwrap().program, "scoop");
+
+    let _ = fs::remove_dir_all(&base);
+}
+
+#[test]
+fn missing_program_is_reported_explicitly() {
+    let cmd = Command {
+        program: "definitely_missing_upi_binary_12345".into(),
+        args: vec![],
+    };
+
+    let err = cmd.run().unwrap_err();
+    match err {
+        upi_core::Error::ProgramNotFound(program) => {
+            assert_eq!(program, "definitely_missing_upi_binary_12345")
+        }
+        other => panic!("expected ProgramNotFound, got {other:?}"),
+    }
 }

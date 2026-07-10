@@ -136,15 +136,33 @@ fn run(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
     let sources = build_sources(registry, cli.offline)?;
     let resolver = Resolver::with_registry_and_sources(registry.clone(), sources)?;
 
-    let cmd = resolver.resolve_for_os(package, &os_type)?;
+    let commands = resolver.resolve_commands_for_os(package, &os_type)?;
 
     let msg = format!("✔ resolved {package}");
     finish_spinner(spinner, msg);
 
     if cli.dry_run {
-        println!("{}", cmd.to_display());
+        if let Some(cmd) = commands.first() {
+            println!("{}", cmd.to_display());
+        }
     } else {
-        cmd.run()?;
+        let mut last_error = None;
+        for cmd in commands {
+            match cmd.run() {
+                Ok(()) => return Ok(()),
+                Err(upi_core::Error::ProgramNotFound(_)) => {
+                    last_error = Some(upi_core::Error::Resolve(format!(
+                        "package manager not available for {os_type:?}"
+                    )));
+                    continue;
+                }
+                Err(err) => return Err(err),
+            }
+        }
+
+        return Err(last_error.unwrap_or_else(|| {
+            upi_core::Error::Resolve(format!("no install command available for {os_type:?}"))
+        }));
     }
 
     Ok(())
