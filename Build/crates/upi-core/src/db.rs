@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use rusqlite::Connection;
@@ -40,21 +41,34 @@ impl Database {
     ///
     /// Rehydrates from the embedded `seed.db.zst` if the cached version is stale or absent.
     pub fn open_at(cache_dir: &Path) -> Result<Self> {
+        let _guard = cache_init_lock().lock().expect("cache init lock poisoned");
+
         std::fs::create_dir_all(cache_dir).map_err(Error::Io)?;
 
         let db_path = cache_dir.join(DB_FILE);
         let meta_path = cache_dir.join(META_FILE);
 
         if should_rehydrate(&meta_path, &db_path)? {
-            log::info!("rehydrating seed database");
-            let decompressed = decompress_seed()?;
-            std::fs::write(&db_path, &decompressed).map_err(Error::Io)?;
-            write_meta(&meta_path)?;
+            rehydrate_seed_database(&db_path, &meta_path)?;
         } else {
             log::debug!("seed database is current");
         }
 
-        let conn = Connection::open(&db_path).map_err(|e| Error::Database(e.to_string()))?;
+        let conn = match Connection::open(&db_path) {
+            Ok(conn) => conn,
+            Err(err) if is_corrupt_db_error(&err) => {
+                log::warn!("seed database cache is corrupt, rehydrating");
+                if db_path.exists() {
+                    std::fs::remove_file(&db_path).map_err(Error::Io)?;
+                }
+                if meta_path.exists() {
+                    std::fs::remove_file(&meta_path).map_err(Error::Io)?;
+                }
+                rehydrate_seed_database(&db_path, &meta_path)?;
+                Connection::open(&db_path).map_err(|e| Error::Database(e.to_string()))?
+            }
+            Err(err) => return Err(Error::Database(err.to_string())),
+        };
         log::debug!("database opened at {}", db_path.display());
 
         Ok(Self { conn })
@@ -219,6 +233,32 @@ fn write_meta(meta_path: &Path) -> Result<()> {
     let content =
         serde_json::to_string_pretty(&meta).expect("serde_json::Value is always serializable");
     std::fs::write(meta_path, content).map_err(|e| Error::Database(format!("{e}")))
+}
+
+fn rehydrate_seed_database(db_path: &Path, meta_path: &Path) -> Result<()> {
+    log::info!("rehydrating seed database");
+    let decompressed = decompress_seed()?;
+
+    let tmp_path = db_path.with_extension("db.tmp");
+    std::fs::write(&tmp_path, &decompressed).map_err(Error::Io)?;
+
+    if db_path.exists() {
+        std::fs::remove_file(db_path).map_err(Error::Io)?;
+    }
+
+    std::fs::rename(&tmp_path, db_path).map_err(Error::Io)?;
+    write_meta(meta_path)?;
+    Ok(())
+}
+
+fn cache_init_lock() -> &'static Mutex<()> {
+    static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+    LOCK.get_or_init(|| Mutex::new(()))
+}
+
+fn is_corrupt_db_error(err: &rusqlite::Error) -> bool {
+    let msg = err.to_string().to_lowercase();
+    msg.contains("malformed") || msg.contains("not a database")
 }
 
 fn decompress_seed() -> Result<Vec<u8>> {
