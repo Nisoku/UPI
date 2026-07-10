@@ -680,9 +680,9 @@ dependencies = [
 
 [[package]]
 name = "noyalib"
-version = "0.0.7"
+version = "0.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aaecb583890b00deddd413f1c9522cc3537e893cd3845dec578ed6c85de653f7"
+checksum = "12ed62e7f82a103cc3c01c43d8fbbe8d0591731e5625dc85661298aede7d6c3d"
 dependencies = [
  "indexmap",
  "itoa",
@@ -1303,6 +1303,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shlex",
+ "strsim",
 ]
 
 [[package]]
