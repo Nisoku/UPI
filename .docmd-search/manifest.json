@@ -5,51 +5,51 @@
   "status": "complete",
   "totalFiles": 9,
   "indexedFiles": 9,
-  "totalChunks": 83,
+  "totalChunks": 84,
   "batchCount": 1,
   "files": {
     "cli/index.md": {
-      "mtime": 1781233481289.6887,
-      "size": 2925,
+      "mtime": 1783737463838.3572,
+      "size": 3207,
       "batches": []
     },
     "getting-started/concepts.md": {
-      "mtime": 1781233481289.6887,
+      "mtime": 1783737463838.3572,
       "size": 3268,
       "batches": []
     },
     "getting-started/installation.md": {
-      "mtime": 1781233481289.8252,
+      "mtime": 1783737463838.4504,
       "size": 2358,
       "batches": []
     },
     "getting-started/quickstart.md": {
-      "mtime": 1781233481289.8252,
+      "mtime": 1783737463838.4504,
       "size": 1643,
       "batches": []
     },
     "guide/platforms.md": {
-      "mtime": 1781233481289.8252,
+      "mtime": 1783737463838.4504,
       "size": 2413,
       "batches": []
     },
     "guide/resolution.md": {
-      "mtime": 1781233481289.9775,
-      "size": 3217,
+      "mtime": 1783737463838.5457,
+      "size": 4284,
       "batches": []
     },
     "index.md": {
-      "mtime": 1781233481289.9775,
+      "mtime": 1783737463838.5457,
       "size": 3694,
       "batches": []
     },
     "reference/architecture.md": {
-      "mtime": 1781233481289.9775,
+      "mtime": 1783737463838.5457,
       "size": 3300,
       "batches": []
     },
     "reference/database.md": {
-      "mtime": 1781233481290.1404,
+      "mtime": 1783737463838.669,
       "size": 3207,
       "batches": []
     }

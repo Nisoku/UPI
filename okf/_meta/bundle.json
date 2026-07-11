@@ -1,0 +1,113 @@
+{
+  "okf_version": "0.8.10",
+  "bundle": {
+    "name": "upi",
+    "title": "UPI",
+    "description": "",
+    "url": "https://nisoku.org/UPI",
+    "generated_by": "@docmd/plugin-okf",
+    "generated_at": "2026-07-11T02:38:05.514Z",
+    "default_type": "concept"
+  },
+  "stats": {
+    "concepts": 9,
+    "by_type": {
+      "concept": 7,
+      "reference": 2
+    },
+    "locales": [],
+    "versions": []
+  },
+  "concepts": [
+    {
+      "id": "cli",
+      "type": "concept",
+      "title": "CLI Reference",
+      "path": "/cli/",
+      "file": "concepts/cli.md",
+      "locale": "",
+      "version": "",
+      "tags": []
+    },
+    {
+      "id": "getting-started-concepts",
+      "type": "concept",
+      "title": "Core Concepts",
+      "path": "/getting-started/concepts/",
+      "file": "concepts/getting-started-concepts.md",
+      "locale": "",
+      "version": "",
+      "tags": []
+    },
+    {
+      "id": "getting-started-installation",
+      "type": "concept",
+      "title": "Installation",
+      "path": "/getting-started/installation/",
+      "file": "concepts/getting-started-installation.md",
+      "locale": "",
+      "version": "",
+      "tags": []
+    },
+    {
+      "id": "getting-started-quickstart",
+      "type": "concept",
+      "title": "Quick Start",
+      "path": "/getting-started/quickstart/",
+      "file": "concepts/getting-started-quickstart.md",
+      "locale": "",
+      "version": "",
+      "tags": []
+    },
+    {
+      "id": "guide-platforms",
+      "type": "concept",
+      "title": "Supported Platforms",
+      "path": "/guide/platforms/",
+      "file": "concepts/guide-platforms.md",
+      "locale": "",
+      "version": "",
+      "tags": []
+    },
+    {
+      "id": "guide-resolution",
+      "type": "concept",
+      "title": "Resolution Pipeline",
+      "path": "/guide/resolution/",
+      "file": "concepts/guide-resolution.md",
+      "locale": "",
+      "version": "",
+      "tags": []
+    },
+    {
+      "id": "root",
+      "type": "concept",
+      "title": "UPI",
+      "path": "/",
+      "file": "concepts/root.md",
+      "locale": "",
+      "version": "",
+      "tags": []
+    },
+    {
+      "id": "reference-architecture",
+      "type": "reference",
+      "title": "Architecture",
+      "path": "/reference/architecture/",
+      "file": "concepts/reference-architecture.md",
+      "locale": "",
+      "version": "",
+      "tags": []
+    },
+    {
+      "id": "reference-database",
+      "type": "reference",
+      "title": "Database",
+      "path": "/reference/database/",
+      "file": "concepts/reference-database.md",
+      "locale": "",
+      "version": "",
+      "tags": []
+    }
+  ]
+}
