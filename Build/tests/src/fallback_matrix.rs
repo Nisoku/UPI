@@ -109,6 +109,28 @@ ffmpeg 4.4.1 [Approved]
 }
 
 #[test]
+fn short_query_does_not_pick_unrelated_prefix_match() {
+    let output = "\
+chocolatey 0.10.15
+rgsupervision 1.2.3 [Approved]
+";
+    let result = parse_search_output(output, "rg");
+    assert_eq!(result, None);
+}
+
+#[test]
+fn node_prefers_nodejs_over_iisnode() {
+    let output = "\
+Chocolatey v2.7.3
+iisnode 0.2.26 [Approved]
+node-webkit 0.6.2 [Approved]
+nodejs 26.5.0 [Approved]
+";
+    let result = parse_search_output(output, "node");
+    assert_eq!(result, Some("nodejs".into()));
+}
+
+#[test]
 fn scoop_after_arrow() {
     let output = "\
 'ffmpeg' suggests 'ffmpeg-shared'

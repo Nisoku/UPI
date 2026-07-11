@@ -200,7 +200,7 @@ dependencies = [
 
 [[package]]
 name = "db-update"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dirs",
  "env_logger",
@@ -680,9 +680,9 @@ dependencies = [
 
 [[package]]
 name = "noyalib"
-version = "0.0.7"
+version = "0.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aaecb583890b00deddd413f1c9522cc3537e893cd3845dec578ed6c85de653f7"
+checksum = "12ed62e7f82a103cc3c01c43d8fbbe8d0591731e5625dc85661298aede7d6c3d"
 dependencies = [
  "indexmap",
  "itoa",
@@ -1279,7 +1279,7 @@ checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
 name = "upi-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "env_logger",
@@ -1291,7 +1291,7 @@ dependencies = [
 
 [[package]]
 name = "upi-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dirs",
  "include_dir",
@@ -1303,11 +1303,12 @@ dependencies = [
  "serde",
  "serde_json",
  "shlex",
+ "strsim",
 ]
 
 [[package]]
 name = "upi-net"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "log",
  "serde",
@@ -1319,7 +1320,7 @@ dependencies = [
 
 [[package]]
 name = "upi-tests"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde_json",
  "upi-core",

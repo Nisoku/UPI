@@ -167,6 +167,24 @@ fn rehydrate_on_version_mismatch() {
 }
 
 #[test]
+fn rehydrate_on_corrupt_database() {
+    let dir = tmp_cache_dir();
+    std::fs::create_dir_all(&dir).unwrap();
+
+    let meta_path = dir.join("meta.json");
+    std::fs::write(&meta_path, br#"{"version":"1","updated_at":0}"#).unwrap();
+
+    let db_path = dir.join("seed.db");
+    std::fs::write(&db_path, b"not a sqlite database").unwrap();
+
+    let db = Database::open_at(&dir).unwrap();
+    let version = db.seed_version().unwrap();
+    assert_eq!(version, "1");
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
 fn mapping_has_provenance() {
     let dir = tmp_cache_dir();
     let db = Database::open_at(&dir).unwrap();

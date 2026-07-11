@@ -51,9 +51,12 @@ cargo install upi
 
 ## How Resolution Works (in order of priority)
 
-1. **Repology** - global project-to-package-name resolution.
-2. **Database lookup** - compressed SQLite seed DB with common packages across all platforms. Supports aliases (`python3` -> `python`) and provenance tracking.
-3. **Fallback search** - native package manager regex search.
+1. **Alias** - shorthand maps (`rg` -> `ripgrep`, `py` -> `python`, `nvim` -> `neovim`).
+2. **Repology** - global project-to-package-name resolution.
+3. **Database lookup** - compressed SQLite seed DB with common packages across all platforms. Supports aliases (`python3` -> `python`) and provenance tracking.
+4. **Fallback search** - native package manager regex search (skipped for short queries <= 3 chars).
+
+If no confident match is found, UPI shows "Did you mean: ..." suggestions and exits with an error. Use `--allow-identity` to install the raw query as-is.
 
 The DB is cached at `~/.upi/db/seed.db` and only rehydrated when the seed version changes.
 

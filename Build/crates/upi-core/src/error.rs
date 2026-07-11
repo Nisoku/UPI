@@ -17,6 +17,8 @@ pub enum Error {
     Network(String),
     /// An underlying I/O operation failed.
     Io(std::io::Error),
+    /// A required command or shell was not found on PATH.
+    ProgramNotFound(String),
 }
 
 impl fmt::Display for Error {
@@ -29,6 +31,7 @@ impl fmt::Display for Error {
             Error::Database(msg) => write!(f, "database error: {msg}"),
             Error::Network(msg) => write!(f, "network error: {msg}"),
             Error::Io(err) => write!(f, "I/O error: {err}"),
+            Error::ProgramNotFound(program) => write!(f, "program not found: {program}"),
         }
     }
 }
