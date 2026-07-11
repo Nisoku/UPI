@@ -138,7 +138,9 @@ impl Resolver {
             .ok_or_else(|| Error::UnsupportedOs(format!("{os_type:?}")))?;
 
         log::debug!("using config: {} (sudo={})", config.manager, config.sudo);
-        let (os_package, _source) = self.lookup_package_name(package, os_type, allow_identity)?;
+        let mut candidates = Vec::new();
+        let (os_package, _source) =
+            self.lookup_package_name(package, os_type, allow_identity, &mut candidates)?;
         log::info!("resolved '{}' -> '{}'", package, os_package);
 
         let mut configs = self.registry.configs_for_type(os_type);
@@ -161,8 +163,9 @@ impl Resolver {
             .for_type(os_type)
             .ok_or_else(|| Error::UnsupportedOs(format!("{os_type:?}")))?;
 
+        let mut candidates = Vec::new();
         let (os_package, source) =
-            self.lookup_package_name(package, os_type, self.allow_identity)?;
+            self.lookup_package_name(package, os_type, self.allow_identity, &mut candidates)?;
         let cmd = Command::from_config(config, &os_package);
 
         Ok((cmd, os_package, source, config.manager.clone()))
@@ -266,9 +269,14 @@ impl Resolver {
         package: &str,
         os_type: &os_info::Type,
         allow_identity: bool,
+        candidates: &mut Vec<ResolveCandidate>,
     ) -> Result<(String, String)> {
         if let Some(alias) = resolve_alias(package) {
             log::debug!("alias: '{}' -> '{}'", package, alias);
+            candidates.push(ResolveCandidate {
+                name: alias.to_string(),
+                source: "alias".into(),
+            });
             return Ok((alias.to_string(), "alias".into()));
         }
 
@@ -276,6 +284,10 @@ impl Resolver {
             log::debug!("source[{i}]: trying to resolve '{package}'");
             if let Some(name) = source.resolve_package(package, os_type)? {
                 log::debug!("source[{i}]: found '{name}'");
+                candidates.push(ResolveCandidate {
+                    name: name.clone(),
+                    source: "repology".into(),
+                });
                 return Ok((name, "repology".into()));
             }
         }
@@ -288,6 +300,10 @@ impl Resolver {
                 mapping.confidence
             );
             let source = format!("database (confidence={})", mapping.confidence);
+            candidates.push(ResolveCandidate {
+                name: mapping.os_package.clone(),
+                source: source.clone(),
+            });
             return Ok((mapping.os_package, source));
         }
 
@@ -305,6 +321,10 @@ impl Resolver {
                 if let Some(searcher) = FallbackSearcher::from_config(config) {
                     if let Some(name) = searcher.search(package)? {
                         log::debug!("fallback: found '{name}'");
+                        candidates.push(ResolveCandidate {
+                            name: name.clone(),
+                            source: format!("fallback search ({})", config.manager),
+                        });
                         return Ok((name, format!("fallback search ({})", config.manager)));
                     }
                 }
@@ -313,10 +333,14 @@ impl Resolver {
 
         if allow_identity {
             log::debug!("identity: using '{package}' as-is");
+            candidates.push(ResolveCandidate {
+                name: package.to_string(),
+                source: "identity".into(),
+            });
             return Ok((package.to_string(), "identity".into()));
         }
 
-        let suggestions = self.best_suggestions(package, os_type)?;
+        let suggestions = self.best_suggestions(package, candidates);
         if suggestions.is_empty() {
             Err(Error::Resolve(format!(
                 "no confident match for '{package}'. Re-run with --allow-identity to install the exact input"
@@ -329,13 +353,11 @@ impl Resolver {
         }
     }
 
-    fn best_suggestions(&self, query: &str, os_type: &os_info::Type) -> Result<Vec<String>> {
-        let candidates = self.search_candidates(query, os_type)?;
-
+    fn best_suggestions(&self, query: &str, candidates: &[ResolveCandidate]) -> Vec<String> {
         let mut ranked: Vec<(f64, String)> = candidates
-            .into_iter()
+            .iter()
             .filter(|c| c.source != "identity")
-            .map(|c| (suggestion_score(query, &c.name), c.name))
+            .map(|c| (suggestion_score(query, &c.name), c.name.clone()))
             .collect();
 
         // When search results are sparse, also score against well-known package names
@@ -363,7 +385,7 @@ impl Resolver {
             }
         }
 
-        Ok(out)
+        out
     }
 }
 

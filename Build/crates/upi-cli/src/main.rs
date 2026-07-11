@@ -252,7 +252,8 @@ fn run_search(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
         } else {
             c.source.clone()
         };
-        println!("    {:30}  <- {}", color::bold(&c.name), source_label);
+        let padded = format!("{:<30}", c.name);
+        println!("    {}  <- {}", color::bold(&padded), source_label);
     }
     if let Some(ref cfg) = config_clone {
         let primary = candidates

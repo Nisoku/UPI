@@ -57,6 +57,12 @@ fn supports_color() -> bool {
             enable_vt();
             return true;
         }
+        #[cfg(windows)]
+        {
+            if enable_vt() {
+                return true;
+            }
+        }
         #[cfg(not(windows))]
         {
             if let Ok(val) = std::env::var("TERM") {
@@ -71,25 +77,33 @@ fn supports_color() -> bool {
 
 /// Enable Windows VT processing so ANSI escape sequences render as colors.
 #[cfg(windows)]
-fn enable_vt() {
+fn enable_vt() -> bool {
     use std::os::windows::io::AsRawHandle;
 
     unsafe {
+        let mut ok = true;
         for raw in [
             std::io::stdout().as_raw_handle(),
             std::io::stderr().as_raw_handle(),
         ] {
             let handle = raw as Handle;
             let mut mode: u32 = 0;
-            if GetConsoleMode(handle, &mut mode) != 0 {
-                SetConsoleMode(handle, mode | 0x0004);
+            if GetConsoleMode(handle, &mut mode) == 0 {
+                ok = false;
+                continue;
+            }
+            if SetConsoleMode(handle, mode | 0x0004) == 0 {
+                ok = false;
             }
         }
+        ok
     }
 }
 
 #[cfg(not(windows))]
-fn enable_vt() {}
+fn enable_vt() -> bool {
+    true
+}
 
 #[cfg(windows)]
 type Handle = *mut core::ffi::c_void;
