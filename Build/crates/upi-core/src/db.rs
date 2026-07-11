@@ -69,6 +69,31 @@ impl Database {
             }
             Err(err) => return Err(Error::Database(err.to_string())),
         };
+
+        let probe: std::result::Result<i64, _> =
+            conn.query_row("PRAGMA schema_version", [], |row| row.get(0));
+        if probe.is_err() {
+            log::warn!("seed database failed schema_version probe, rehydrating");
+            drop(conn);
+            if db_path.exists() {
+                std::fs::remove_file(&db_path).map_err(Error::Io)?;
+            }
+            if meta_path.exists() {
+                std::fs::remove_file(&meta_path).map_err(Error::Io)?;
+            }
+            rehydrate_seed_database(&db_path, &meta_path)?;
+            let conn = Connection::open(&db_path).map_err(|e| Error::Database(e.to_string()))?;
+            let verify: std::result::Result<i64, _> =
+                conn.query_row("PRAGMA schema_version", [], |row| row.get(0));
+            if verify.is_err() {
+                return Err(Error::Database(
+                    "rehydrated seed database still fails schema probe".into(),
+                ));
+            }
+            log::debug!("database reopened at {}", db_path.display());
+            return Ok(Self { conn });
+        }
+
         log::debug!("database opened at {}", db_path.display());
 
         Ok(Self { conn })

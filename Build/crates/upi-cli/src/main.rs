@@ -1,3 +1,5 @@
+mod color;
+
 use std::io::{IsTerminal, Write};
 use std::time::Duration;
 
@@ -12,12 +14,7 @@ use upi_net::RepologyClient;
     name = "upi",
     version,
     about = "Universal Package Installer",
-    before_help = "  ██╗   ██╗██████╗ ██╗
-  ██║   ██║██╔══██╗██║
-  ██║   ██║██████╔╝██║
-  ██║   ██║██╔═══╝ ██║
-  ╚██████╔╝██║     ██║
-   ╚═════╝ ╚═╝     ╚═╝"
+    before_help = ""
 )]
 struct Cli {
     #[command(subcommand)]
@@ -62,6 +59,7 @@ enum Commands {
 }
 
 fn main() {
+    print_banner();
     let cli = Cli::parse();
     init_logger(cli.verbose);
 
@@ -71,8 +69,20 @@ fn main() {
     };
 
     if let Err(e) = result {
-        let msg = format!("error: {e}");
-        eprintln!("{msg}");
+        finish_spinner(ProgressBar::new_spinner(), String::new());
+        match e {
+            upi_core::Error::Resolve(msg) => {
+                if let Some((main, hint)) = msg.split_once("Re-run with ") {
+                    eprintln!("  {} {}", color::red("error:"), main);
+                    eprintln!("         Re-run with {hint}");
+                } else {
+                    eprintln!("  {} {msg}", color::red("error:"));
+                }
+            }
+            other => {
+                eprintln!("  {} {other}", color::red("error:"));
+            }
+        }
         std::process::exit(1);
     }
 }
@@ -115,13 +125,25 @@ fn is_interactive() -> bool {
     std::env::var("CI").is_err() && std::io::stderr().is_terminal()
 }
 
+fn print_banner() {
+    let art = [
+        "██╗   ██╗██████╗ ██╗",
+        "██║   ██║██╔══██╗██║",
+        "██║   ██║██████╔╝██║",
+        "██║   ██║██╔═══╝ ██║",
+        "╚██████╔╝██║     ██║",
+        " ╚═════╝ ╚═╝     ╚═╝",
+    ];
+    eprintln!("{}", color::green(&art.join("\n")));
+}
+
 fn spinner() -> ProgressBar {
     let pb = ProgressBar::new_spinner();
     if !is_interactive() {
         pb.set_draw_target(ProgressDrawTarget::hidden());
     }
     pb.set_style(
-        ProgressStyle::with_template("{spinner:.cyan} {msg}")
+        ProgressStyle::with_template("{spinner:.green} {msg}")
             .unwrap()
             .tick_chars("◐◓◑◒"),
     );
@@ -146,18 +168,31 @@ fn run(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
 
     let commands = resolver.resolve_commands_for_os(package, &os_type)?;
 
-    let msg = format!("✔ resolved {package}");
-    finish_spinner(spinner, msg);
-
     if cli.dry_run {
+        let msg = format!(
+            "{} {}",
+            color::green("✔"),
+            color::bold(&format!("resolved {package}"))
+        );
+        finish_spinner(spinner, msg);
         if let Some(cmd) = commands.first() {
-            println!("{}", cmd.to_display());
+            println!();
+            println!("  {}", color::bright_green(&cmd.to_display()));
+            println!();
         }
     } else {
         let mut last_error = None;
         for cmd in commands {
             match cmd.run() {
-                Ok(()) => return Ok(()),
+                Ok(()) => {
+                    let msg = format!(
+                        "{} {}",
+                        color::green("✔"),
+                        color::bold(&format!("installed {package}"))
+                    );
+                    finish_spinner(spinner, msg);
+                    return Ok(());
+                }
                 Err(upi_core::Error::ProgramNotFound(_)) => {
                     last_error = Some(upi_core::Error::Resolve(format!(
                         "package manager not available for {os_type:?}"
@@ -192,15 +227,32 @@ fn run_search(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
     let resolver = Resolver::with_registry_and_sources(registry.clone(), sources)?;
     let candidates = resolver.search_candidates(package, &os_type)?;
 
-    let msg = format!("✔ searched for {package}");
+    let msg = format!(
+        "{} {}",
+        color::green("✔"),
+        color::bold(&format!("searched for {package}"))
+    );
     finish_spinner(spinner, msg);
 
-    println!(" OS:       {os_type:?}");
-    println!(" Manager:  {}", manager.as_deref().unwrap_or("?"));
-    println!(" Query:    {package}");
-    println!(" Results:");
+    println!();
+    println!("  {}       {os_type:?}", color::green("OS:"));
+    println!(
+        "  {}  {}",
+        color::green("Manager:"),
+        manager.as_deref().unwrap_or("?")
+    );
+    println!("  {}    {package}", color::green("Query:"));
+    println!();
+    println!("  {}", color::green("Results:"));
     for c in &candidates {
-        println!("   {:30}  <- {}", c.name, c.source);
+        let source_label = if c.source.starts_with("database") {
+            color::green(&c.source)
+        } else if c.source == "identity" {
+            color::dim(&c.source)
+        } else {
+            c.source.clone()
+        };
+        println!("    {:30}  <- {}", color::bold(&c.name), source_label);
     }
     if let Some(ref cfg) = config_clone {
         let primary = candidates
@@ -208,8 +260,14 @@ fn run_search(package: &str, cli: &Cli) -> Result<(), upi_core::Error> {
             .map(|c| c.name.as_str())
             .unwrap_or(package);
         let cmd = upi_core::Command::from_config(cfg, primary);
-        println!(" Command:  {}", cmd.to_display());
+        println!();
+        println!(
+            "  {}  {}",
+            color::green("Command:"),
+            color::bright_green(&cmd.to_display())
+        );
     }
+    println!();
 
     Ok(())
 }

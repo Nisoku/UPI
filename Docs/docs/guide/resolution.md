@@ -24,13 +24,13 @@ Aliases are checked first and short-circuit the entire pipeline.
 
 ### 2. Repology (confidence: 0.9)
 
-When the database has no match, UPI queries the [Repology](https://repology.org) API. Repology maintains a global index of how projects are packaged across 200+ repositories.
+UPI queries the [Repology](https://repology.org) API. Repology maintains a global index of how projects are packaged across 200+ repositories.
 
-The client sends the query as a project name, receives all known package names across all repos, and matches them against the target OS's configured repositories using the `PlatformRegistry`.
+The client sends the query as a project name, receives all known package names across all repos, and matches them against the target OS's configured repositories using the `PlatformRegistry`. If Repology produces a match, resolution completes immediately.
 
 ### 3. Database Lookup (confidence: 1.0)
 
-The embedded SQLite seed database is checked next. If the package exists in the database with a mapping for the target OS, resolution completes immediately.
+If Repology has no match, the embedded SQLite seed database is checked next. If the package exists in the database with a mapping for the target OS, resolution completes immediately.
 
 ```txt
 query: "vim" on macos
@@ -58,7 +58,7 @@ As a last resort, the query is passed through as the package name. This succeeds
 
 Identity is **disabled by default**. When no confident match is found, UPI shows:
 
-```
+```text
 error: resolve error: no confident match for 'foo'. Did you mean: foobar, foobar-git? Re-run with --allow-identity to install the exact input
 ```
 
@@ -75,7 +75,7 @@ Each mapping in the database carries a confidence score:
 | Fallback search  | 0.7        | Native package manager search |
 | Identity         | 0.5        | Pass-through (opt-in)         |
 
-Higher confidence sources take priority when multiple sources produce results.
+Higher confidence scores indicate more reliable mappings, but the pipeline uses first-match-wins: the first source to produce a result determines the outcome.
 
 ## Offline Behavior
 

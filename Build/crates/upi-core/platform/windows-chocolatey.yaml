@@ -1,7 +1,7 @@
 targets:
   - Windows
 manager: chocolatey
-sudo: false
+sudo: true
 install: choco install -y {package}
 search: choco search {query}
 provides: choco search {binary}

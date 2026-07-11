@@ -30,17 +30,6 @@ pub struct ResolveCandidate {
     pub source: String,
 }
 
-/// The result of a resolution attempt, including optional suggestions for low-confidence cases.
-#[derive(Debug)]
-pub struct ResolveResult {
-    /// The resolved OS package name.
-    pub package: String,
-    /// Where the resolution came from.
-    pub source: String,
-    /// If the match was low-confidence, ranked suggestions to show the user.
-    pub suggestions: Vec<String>,
-}
-
 /// Orchestrates package resolution across multiple sources: Repology, database, fallback, identity.
 ///
 /// Tries network sources first, then local database, fallback search, and finally identity pass-through.
@@ -247,14 +236,16 @@ impl Resolver {
 
         let mut configs = self.registry.configs_for_type(os_type);
         configs.sort_by_key(|config| !config.is_available());
-        for config in configs {
-            if let Some(searcher) = FallbackSearcher::from_config(config) {
-                if let Some(name) = searcher.search(query)? {
-                    if seen.insert(name.clone()) {
-                        candidates.push(ResolveCandidate {
-                            name,
-                            source: format!("fallback search ({})", config.manager),
-                        });
+        if query.chars().count() > SHORT_QUERY_LIMIT {
+            for config in configs {
+                if let Some(searcher) = FallbackSearcher::from_config(config) {
+                    if let Some(name) = searcher.search(query)? {
+                        if seen.insert(name.clone()) {
+                            candidates.push(ResolveCandidate {
+                                name,
+                                source: format!("fallback search ({})", config.manager),
+                            });
+                        }
                     }
                 }
             }
@@ -301,10 +292,10 @@ impl Resolver {
         }
 
         // Short queries (<=3 chars) require exact or alias match only and no fuzzy fallback.
-        if package.len() <= SHORT_QUERY_LIMIT {
+        if package.chars().count() <= SHORT_QUERY_LIMIT {
             log::debug!(
-                "short query '{package}' (len={}): skipping fuzzy fallback",
-                package.len()
+                "short query '{package}' (chars={}): skipping fuzzy fallback",
+                package.chars().count()
             );
         } else {
             log::debug!("fallback: searching for '{package}'");
@@ -403,7 +394,6 @@ const KNOWN_PACKAGES: &[&str] = &[
     "ghostscript",
     "tree",
     "tmux",
-    "ripgrep",
     "nano",
     "gcc",
     "make",
@@ -415,7 +405,6 @@ const KNOWN_PACKAGES: &[&str] = &[
     "docker",
     "podman",
     "gh",
-    "jq",
     "zig",
     "ruby",
     "perl",

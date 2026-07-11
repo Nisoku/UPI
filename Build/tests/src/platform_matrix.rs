@@ -103,8 +103,8 @@ fn resolver_detects_and_resolves() {
     let cmd = resolver.resolve("ffmpeg").unwrap();
     let display = cmd.to_display();
     assert!(
-        display.contains("install"),
-        "expected an install command, got: {display}"
+        display.contains("ffmpeg"),
+        "expected 'ffmpeg' in resolved command, got: {display}"
     );
 }
 
