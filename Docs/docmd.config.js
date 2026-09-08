@@ -9,7 +9,7 @@ export default {
     enableModeToggle: true,
     positionMode: "top",
     codeHighlight: true,
-    customCss: ['/assets/css/theme.css'],
+    customCss: ["./assets/css/theme.css"],
     copyWidgets: {
       enabled: true,
       raw: true,
@@ -68,11 +68,11 @@ export default {
   copyCode: true,
   pageNavigation: true,
   navigation: [
-    { title: "Home", path: "/", icon: "home" },
+    { title: "Home", path: "./", icon: "home" },
     {
       title: "CLI Reference",
       icon: "terminal",
-      path: "/cli/",
+      path: "./cli/",
       collapsible: false,
     },
     {
@@ -80,9 +80,9 @@ export default {
       icon: "rocket",
       collapsible: false,
       children: [
-        { title: "Quick Start", path: "/getting-started/quickstart", icon: "play" },
-        { title: "Installation", path: "/getting-started/installation", icon: "download" },
-        { title: "Core Concepts", path: "/getting-started/concepts", icon: "book" },
+        { title: "Quick Start", path: "./getting-started/quickstart", icon: "play" },
+        { title: "Installation", path: "./getting-started/installation", icon: "download" },
+        { title: "Core Concepts", path: "./getting-started/concepts", icon: "book" },
       ],
     },
     {
@@ -90,8 +90,8 @@ export default {
       icon: "book-open",
       collapsible: false,
       children: [
-        { title: "Resolution Pipeline", path: "/guide/resolution", icon: "git-merge" },
-        { title: "Supported Platforms", path: "/guide/platforms", icon: "globe" },
+        { title: "Resolution Pipeline", path: "./guide/resolution", icon: "git-merge" },
+        { title: "Supported Platforms", path: "./guide/platforms", icon: "globe" },
       ],
     },
     {
@@ -99,8 +99,8 @@ export default {
       icon: "file-text",
       collapsible: false,
       children: [
-        { title: "Database", path: "/reference/database", icon: "database" },
-        { title: "Architecture", path: "/reference/architecture", icon: "box" },
+        { title: "Database", path: "./reference/database", icon: "database" },
+        { title: "Architecture", path: "./reference/architecture", icon: "box" },
       ],
     },
     {
