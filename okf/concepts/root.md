@@ -4,10 +4,10 @@ title: UPI
 description: "Universal Package Installer - one command to install anything, anywhere"
 source: "https://nisoku.org/UPI/"
 path: /
-updated: 2026-07-11
+updated: 2026-09-08
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-07-11T02:38:05.513Z"
+  generated_at: "2026-09-08T13:18:29.282Z"
 ---
 ---
 title: "UPI"

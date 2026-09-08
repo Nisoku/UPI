@@ -4,10 +4,10 @@ title: Architecture
 description: "Codebase structure and design principles"
 source: "https://nisoku.org/UPI/reference/architecture/"
 path: /reference/architecture/
-updated: 2026-07-11
+updated: 2026-09-08
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-07-11T02:38:05.513Z"
+  generated_at: "2026-09-08T13:18:29.282Z"
 ---
 ---
 title: "Architecture"
