@@ -4,10 +4,10 @@ title: "Core Concepts"
 description: "How UPI works under the hood"
 source: "https://nisoku.org/UPI/getting-started/concepts/"
 path: /getting-started/concepts/
-updated: 2026-09-08
+updated: 2026-09-12
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-08T13:18:29.279Z"
+  generated_at: "2026-09-12T20:20:41.607Z"
 ---
 ---
 title: "Core Concepts"

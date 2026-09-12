@@ -4,10 +4,10 @@ title: "Supported Platforms"
 description: "OS families, package managers, and YAML configuration"
 source: "https://nisoku.org/UPI/guide/platforms/"
 path: /guide/platforms/
-updated: 2026-09-08
+updated: 2026-09-12
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-08T13:18:29.280Z"
+  generated_at: "2026-09-12T20:20:41.609Z"
 ---
 ---
 title: "Supported Platforms"

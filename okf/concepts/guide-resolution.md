@@ -4,10 +4,10 @@ title: "Resolution Pipeline"
 description: "How UPI resolves a package name to an install command"
 source: "https://nisoku.org/UPI/guide/resolution/"
 path: /guide/resolution/
-updated: 2026-09-08
+updated: 2026-09-12
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-08T13:18:29.281Z"
+  generated_at: "2026-09-12T20:20:41.610Z"
 ---
 ---
 title: "Resolution Pipeline"

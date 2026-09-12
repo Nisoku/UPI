@@ -4,10 +4,10 @@ title: "Quick Start"
 description: "Install your first package with UPI in 30 seconds"
 source: "https://nisoku.org/UPI/getting-started/quickstart/"
 path: /getting-started/quickstart/
-updated: 2026-09-08
+updated: 2026-09-12
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-08T13:18:29.280Z"
+  generated_at: "2026-09-12T20:20:41.609Z"
 ---
 ---
 title: "Quick Start"

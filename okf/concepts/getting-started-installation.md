@@ -4,10 +4,10 @@ title: Installation
 description: "Install UPI on any platform"
 source: "https://nisoku.org/UPI/getting-started/installation/"
 path: /getting-started/installation/
-updated: 2026-09-08
+updated: 2026-09-12
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-08T13:18:29.279Z"
+  generated_at: "2026-09-12T20:20:41.608Z"
 ---
 ---
 title: "Installation"
