@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@docmd/core": "^0.8.10",
-    "@huggingface/transformers": "^4.2.0",
+    "@huggingface/transformers": "^4.3.0",
     "docmd-search": "^0.1.0",
-    "onnxruntime-node": "^1.26.0"
+    "onnxruntime-node": "^1.30.0"
   }
 }
