@@ -4,10 +4,10 @@ title: Database
 description: "Seed database schema, generation, and update mechanism"
 source: "https://nisoku.org/UPI/reference/database/"
 path: /reference/database/
-updated: 2026-09-12
+updated: 2026-09-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-12T20:20:41.612Z"
+  generated_at: "2026-09-23T16:34:29.829Z"
 ---
 ---
 title: "Database"

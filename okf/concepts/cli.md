@@ -4,10 +4,10 @@ title: "CLI Reference"
 description: "Full reference for the UPI command-line interface"
 source: "https://nisoku.org/UPI/cli/"
 path: /cli/
-updated: 2026-09-12
+updated: 2026-09-23
 okf:
   generated_by: "@docmd/plugin-okf"
-  generated_at: "2026-09-12T20:20:41.606Z"
+  generated_at: "2026-09-23T16:34:29.824Z"
 ---
 ---
 title: "CLI Reference"
